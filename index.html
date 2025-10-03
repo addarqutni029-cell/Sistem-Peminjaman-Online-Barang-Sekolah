@@ -8,10 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Library untuk Ekspor Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body {
+        body, html {
             font-family: 'Poppins', sans-serif;
+            cursor: none; /* Sembunyikan kursor default */
         }
         .splash-icon {
             opacity: 0;
@@ -23,10 +25,26 @@
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             transition: all 0.2s ease-in-out;
+            position: relative;
         }
         .sidebar-link:hover, .sidebar-link.active {
             background-color: #3b82f6; /* bg-blue-600 */
             color: white;
+        }
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            background-color: #ef4444; /* bg-red-500 */
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
         }
         .modal {
             display: none;
@@ -40,17 +58,37 @@
             background-color: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
+            transition: opacity 0.3s ease;
         }
         .modal.show {
             display: flex;
         }
-        /* Style untuk background */
-        .bg-login {
-            background-color: #000000;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23000000'/%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Ccircle cx='0' cy='0' r='20'/%3E%3Ccircle cx='40' cy='0' r='20'/%3E%3Ccircle cx='80' cy='0' r='20'/%3E%3Ccircle cx='0' cy='40' r='20'/%3E%3Ccircle cx='40' cy='40' r='20'/%3E%3Ccircle cx='80' cy='40' r='20'/%3E%3Ccircle cx='0' cy='80' r='20'/%3E%3Ccircle cx='40' cy='80' r='20'/%3E%3Ccircle cx='80' cy='80' r='20'/%3E%3C/g%3E%3C/svg%3E");
+        .modal-content {
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease-out;
         }
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Latar Belakang Animasi Baru untuk Halaman Login */
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .bg-login-animated {
+            background: linear-gradient(-45deg, #4b6cb7, #182848, #2c3e50, #4b79a1);
+            background-size: 400% 400%;
+            animation: gradientAnimation 20s ease infinite;
+        }
+        
         .bg-dashboard {
-            background-color: #000000;
+            background-image: url('https://images.unsplash.com/photo-1599424231882-159b3a7266a7?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
         }
         /* Style untuk kartu profil yang bisa digerakkan */
         #profile-card {
@@ -60,80 +98,50 @@
             cursor: grabbing;
             z-index: 30;
         }
-        /* Kursor Kustom */
+        
+        /* Style untuk Kursor Kustom */
         #cursor-dot, #cursor-outline {
+            pointer-events: none;
             position: fixed;
             top: 0;
             left: 0;
-            pointer-events: none;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
             z-index: 9999;
-            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            opacity: 0;
+            transform: translate(-50%, -50%);
         }
         #cursor-dot {
             width: 8px;
             height: 8px;
-            background-color: #2563eb; /* bg-blue-700 */
+            background-color: #3b82f6;
+            transition: transform 0.1s ease-out;
         }
         #cursor-outline {
             width: 40px;
             height: 40px;
-            border: 2px solid #3b82f6; /* bg-blue-600 */
-            transition-duration: 0.1s;
+            border: 2px solid #3b82f6;
+            transition: transform 0.2s ease-out, background-color 0.2s ease, opacity 0.3s ease;
         }
-        /* Efek hover pada kursor */
-        body:has(button:hover, a:hover, input:hover, select:hover) #cursor-outline {
-            transform: translate(-50%, -50%) scale(1.5);
+        #cursor-outline.cursor-hover {
+            transform: translate(-50%, -50%) scale(1.4);
             background-color: rgba(59, 130, 246, 0.1);
         }
-        body:has(button:active, a:active) #cursor-outline {
-             transform: translate(-50%, -50%) scale(0.9);
+
+        /* Animasi untuk Tombol AI */
+        @keyframes rainbowAnimation {
+            0%{background-position:0% 50%}
+            50%{background-position:100% 50%}
+            100%{background-position:0% 50%}
         }
-        /* Sembunyikan kursor default */
-        html, body, button, a {
-            cursor: none;
+        .ai-button-animated {
+            background: linear-gradient(-45deg, #f38260, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: rainbowAnimation 15s ease infinite;
         }
-        /* Animasi Pelangi untuk Tombol AI */
-        @keyframes rainbow-bg {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .rainbow-animate {
-            background: linear-gradient(90deg, #f87171, #fb923c, #facc15, #4ade80, #38bdf8, #818cf8, #c084fc);
-            background-size: 200% 200%;
-            animation: rainbow-bg 5s ease infinite;
-            color: white;
-            font-weight: bold;
-        }
-        /* Style Tombol yang Lebih Modern */
-        button, .button-style {
-            background-image: linear-gradient(to right, #3b82f6, #2563eb);
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-        button:hover, .button-style:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-        }
-        #logout-btn {
-            background-image: linear-gradient(to right, #ef4444, #dc2626);
-        }
-        #modal-close-btn, #ai-ask-btn, #login-form button {
-             background-image: linear-gradient(to right, #3b82f6, #2563eb);
-        }
-        .bg-green-500 {
-             background-image: linear-gradient(to right, #22c55e, #16a34a);
-        }
-        .bg-blue-600 {
-             background-image: linear-gradient(to right, #3b82f6, #2563eb);
-        }
+
     </style>
 </head>
 <body class="bg-slate-100 antialiased">
-
-    <!-- Kursor Kustom -->
     <div id="cursor-dot"></div>
     <div id="cursor-outline"></div>
 
@@ -141,7 +149,7 @@
     <div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col justify-center items-center z-50 text-white">
         <div class="text-center">
             <div class="flex justify-center items-center space-x-6 mb-6">
-                <div class="splash-icon" id="icon1"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-check"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4Z"/><path d="M16 3h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4Z"/><path d="m16 12 2 2 4-4"/></svg></div>
+                 <div class="splash-icon" id="icon1"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-check"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4Z"/><path d="M16 3h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4Z"/><path d="m16 12 2 2 4-4"/></svg></div>
                 <div class="splash-icon" id="icon2"><svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.084a1 1 0 0 0 0 1.838l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div>
                 <div class="splash-icon" id="icon3"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M21 12a3 3 0 1 0 .142-5.993"/><path d="M3 12a3 3 0 1 0 .142-5.993"/><path d="M12 21a3 3 0 1 0 .142-5.993"/><path d="M5.02 17.11a3 3 0 1 0 3.86-3.86"/><path d="M15.12 17.11a3 3 0 1 0 3.86-3.86"/><path d="M9.03 8.85a3 3 0 1 0-3.88 3.88"/><path d="M18.88 9.03a3 3 0 1 0-3.88 3.88"/><path d="M12 12v3m0 3v3m-3-12h3m3 0h3m-12 0H3m3 3 .75.75M12 12l.75.75M12 12l-.75.75m3-.75-.75.75m-1.5-1.5.75.75"/></svg></div>
             </div>
@@ -151,9 +159,9 @@
     </div>
 
     <!-- Halaman Login -->
-    <div id="login-page" class="min-h-screen flex items-center justify-center bg-login hidden relative">
-        <div class="absolute inset-0 bg-black opacity-50"></div>
-        <div class="max-w-md w-full bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-8 m-4 z-10">
+    <div id="login-page" class="min-h-screen flex items-center justify-center bg-login-animated hidden relative">
+        <div class="absolute inset-0 bg-black opacity-20"></div>
+        <div class="max-w-md w-full bg-white/80 backdrop-blur-xl rounded-xl shadow-2xl p-8 m-4 z-10 border border-white/20">
             <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Absen Dulu, Yuk!</h2>
             <p class="text-center text-gray-600 mb-8">Masuk ke akun untuk mulai beraktivitas.</p>
             <form id="login-form">
@@ -208,62 +216,20 @@
         </div>
     </div>
     
-    <!-- Modal Notifikasi -->
+    <!-- Modal Universal -->
     <div id="notification-modal" class="modal">
-        <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+        <div id="modal-content" class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <div id="modal-icon-container" class="mx-auto mb-4"></div>
             <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
-            <p id="modal-message" class="text-gray-600 mb-6"></p>
-            <button id="modal-close-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Siap!</button>
+            <div id="modal-body" class="text-gray-600 mb-6"></div>
+            <div id="modal-footer">
+                <button id="modal-close-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Tutup</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // === DATA SIMULASI (Pengganti Database) ===
-        const schoolData = {
-            users: [
-                { id: 'adm01', username: '1234', password: '4321', role: 'admin', name: 'Admin TU' },
-                { id: 'guru01', username: '1234', password: '4321', role: 'guru', name: 'Bapak Budi' },
-                { id: 'sis01', username: '1234', password: '4321', role: 'siswa', name: 'Siti' },
-                { id: 'sis02', username: '1234', password: '4321', role: 'siswa', name: 'Budi' }
-            ],
-            items: [
-                { id: 'item01', name: 'Proyektor Ruang Multimedia', total: 5, available: 3, icon: 'projector' },
-                { id: 'item02', name: 'Laptop Chromebook Lab Komputer', total: 20, available: 15, icon: 'laptop-2' },
-                { id: 'item03', name: 'Kamera DSLR Ekskul Fotografi', total: 3, available: 1, icon: 'camera' },
-                { id: 'item04', name: 'Speaker Aktif Aula', total: 4, available: 4, icon: 'speaker' },
-                { id: 'item05', name: 'Bola Basket Lapangan Utama', total: 10, available: 8, icon: 'basketball' },
-                { id: 'item06', name: 'Mikroskop Lab Biologi', total: 15, available: 15, icon: 'microscope' }
-            ],
-            loans: [
-                { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null },
-                { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null },
-                { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00') },
-            ],
-            announcements: [
-                { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
-                { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
-                { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
-            ],
-            funFacts: [
-                "Kata 'sekolah' berasal dari bahasa Yunani 'skhole' yang artinya waktu luang.",
-                "Pensil bisa menulis sekitar 45.000 kata.",
-                "Semut tidak pernah tidur dan tidak punya paru-paru.",
-                "Otak manusia menghasilkan listrik yang cukup untuk menyalakan sebuah bola lampu kecil.",
-                "Indonesia memiliki lebih dari 17.000 pulau, tapi hanya sekitar 6.000 yang berpenghuni."
-            ]
-        };
-
-        // === KONFIGURASI APLIKASI ===
-        const schoolConfig = {
-            borrowLimits: {
-                siswa: 1,
-                guru: 3,
-                admin: 99 // Dianggap tak terbatas
-            },
-            penaltyPerDay: 5000 // Denda per hari keterlambatan
-        };
-
-        // === ICONS (Lucide) ===
+        // === ICONS (Lucide SVG Strings) ===
         const ICONS = {
             dashboard: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`,
             archive: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-archive"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>`,
@@ -279,15 +245,56 @@
             basketball: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-basketball"><circle cx="12" cy="12" r="10"/><path d="M12 2a7 7 0 0 0-7 7c0 4.2 3.8 8.4 7 13 3.2-4.6 7-8.8 7-13a7 7 0 0 0-7-7Z"/><path d="M2.5 9.5c5.1 2.4 14.2 2.4 19 0"/></svg>`,
             microscope: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>`,
             kembalikan: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-corner-down-left"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>`,
+            kelola_aset: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-archive-restore"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="m9 12 3-3 3 3"/><path d="M12 9v9"/></svg>`,
+            chat: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/></svg>`,
+            modal_success: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2 text-green-500"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
+            modal_warning: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
         };
 
         // === APLIKASI UTAMA (Struktur Baru) ===
         const App = {
+            // Data dan Konfigurasi
+            data: {
+                users: [
+                    { id: 'adm01', username: '1234', password: '4321', role: 'admin', name: 'Admin TU' },
+                    { id: 'guru01', username: '1234', password: '4321', role: 'guru', name: 'Bapak Budi' },
+                    { id: 'sis01', username: '1234', password: '4321', role: 'siswa', name: 'Siti' },
+                    { id: 'sis02', username: '1234', password: '4321', role: 'siswa', name: 'Budi' }
+                ],
+                items: [
+                    { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
+                    { id: 'item02', name: 'Laptop Chromebook', category: 'Elektronik', total: 20, available: 15, icon: 'laptop-2' },
+                    { id: 'item03', name: 'Kamera DSLR Canon', category: 'Elektronik', total: 3, available: 1, icon: 'camera' },
+                    { id: 'item04', name: 'Speaker Aktif Aula', category: 'Elektronik', total: 4, available: 4, icon: 'speaker' },
+                    { id: 'item05', name: 'Bola Basket', category: 'Olahraga', total: 10, available: 8, icon: 'basketball' },
+                    { id: 'item06', name: 'Bola Futsal', category: 'Olahraga', total: 10, available: 10, icon: 'basketball' },
+                    { id: 'item07', name: 'Raket Badminton', category: 'Olahraga', total: 8, available: 6, icon: 'archive' },
+                    { id: 'item08', name: 'Mikroskop Binokuler', category: 'Laboratorium', total: 15, available: 15, icon: 'microscope' },
+                    { id: 'item09', name: 'Globe Peta Dunia', category: 'Kelas', total: 5, available: 5, icon: 'archive' },
+                    { id: 'item10', name: 'Papan Catur', category: 'Kelas', total: 10, available: 9, icon: 'archive' },
+                ],
+                loans: [
+                    { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null },
+                    { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null },
+                    { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00') },
+                ],
+                chats: [
+                    { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false },
+                    { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true }
+                ],
+                announcements: [
+                    { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
+                    { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
+                    { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
+                ]
+            },
+            config: {
+                penalty: 10000 // Denda flat
+            },
+            
             // State Aplikasi
             state: {
                 currentUser: null,
-                loans: schoolData.loans,
-                items: schoolData.items
             },
             
             // Elemen DOM
@@ -304,21 +311,19 @@
                 logoutBtn: document.getElementById('logout-btn'),
                 loginError: document.getElementById('login-error'),
                 modal: document.getElementById('notification-modal'),
+                modalIconContainer: document.getElementById('modal-icon-container'),
                 modalTitle: document.getElementById('modal-title'),
-                modalMessage: document.getElementById('modal-message'),
-                modalCloseBtn: document.getElementById('modal-close-btn'),
-                profileCard: document.getElementById('profile-card')
+                modalBody: document.getElementById('modal-body'),
+                modalFooter: document.getElementById('modal-footer'),
+                cursorDot: document.getElementById('cursor-dot'),
+                cursorOutline: document.getElementById('cursor-outline'),
             },
 
             // Inisialisasi
             init() {
                 this.startSplashScreen();
-                this.DOM.loginForm.addEventListener('submit', (e) => this.handlers.handleLogin(e));
-                this.DOM.logoutBtn.addEventListener('click', () => this.handlers.handleLogout());
-                this.DOM.modalCloseBtn.addEventListener('click', () => this.DOM.modal.classList.remove('show'));
-                this.utils.makeDraggable(this.DOM.profileCard);
-                this.utils.setupCustomCursor(); // Menambahkan inisialisasi kursor
-                this.utils.setupButtonClickAnimation(); // Menambahkan inisialisasi animasi klik
+                this.setupEventListeners();
+                this.utils.makeDraggable(document.getElementById('profile-card'));
             },
 
             startSplashScreen() {
@@ -336,6 +341,43 @@
                 }, 3000);
             },
             
+            setupEventListeners() {
+                this.DOM.loginForm.addEventListener('submit', (e) => this.handlers.handleLogin(e));
+                this.DOM.logoutBtn.addEventListener('click', () => this.handlers.handleLogout());
+                this.DOM.modal.addEventListener('click', (e) => {
+                    if (e.target === this.DOM.modal) this.utils.hideModal();
+                });
+                
+                // Event Listeners untuk Kursor Kustom
+                window.addEventListener("mousemove", (e) => {
+                    const posX = e.clientX;
+                    const posY = e.clientY;
+
+                    App.DOM.cursorDot.style.transform = `translate(${posX}px, ${posY}px)`;
+                    App.DOM.cursorDot.style.opacity = '1';
+                    App.DOM.cursorOutline.style.opacity = '1';
+                    
+                    anime({
+                        targets: App.DOM.cursorOutline,
+                        translateX: posX,
+                        translateY: posY,
+                        duration: 400,
+                        easing: 'easeOutExpo'
+                    });
+                });
+
+                document.body.addEventListener('mouseover', (e) => {
+                    if (e.target.matches('a, button, select, input, [onclick], .sidebar-link')) {
+                        App.DOM.cursorOutline.classList.add('cursor-hover');
+                    }
+                });
+                document.body.addEventListener('mouseout', (e) => {
+                     if (e.target.matches('a, button, select, input, [onclick], .sidebar-link')) {
+                        App.DOM.cursorOutline.classList.remove('cursor-hover');
+                    }
+                });
+            },
+            
             // Handler untuk Event
             handlers: {
                 handleLogin(e) {
@@ -343,11 +385,9 @@
                     const username = App.DOM.loginForm.username.value;
                     const password = App.DOM.loginForm.password.value;
                     const role = App.DOM.loginForm.role.value;
-
-                    const foundUser = schoolData.users.find(
+                    const foundUser = App.data.users.find(
                         user => user.username === username && user.password === password && user.role === role
                     );
-
                     if (foundUser) {
                         App.state.currentUser = foundUser;
                         App.DOM.loginPage.classList.add('hidden');
@@ -380,575 +420,398 @@
                     document.querySelectorAll('.sidebar-link').forEach(link => {
                         link.classList.toggle('active', link.dataset.view === view);
                     });
-
-                    const mainContainer = App.DOM.mainContainer;
-                    const mainOverlay = App.DOM.mainOverlay;
-
-                    // Daftar semua kelas background yang mungkin
-                    const bgClasses = ['bg-dashboard', 'bg-yellow-50', 'bg-green-50', 'bg-orange-50', 'bg-blue-50', 'bg-red-50'];
-                    // Hapus semua kelas background yang ada
-                    mainContainer.classList.remove(...bgClasses);
-                    
                     const isDashboard = view === 'dashboard';
-                    mainOverlay.classList.toggle('opacity-50', isDashboard);
-
-                    // Tambahkan kelas background yang sesuai dengan halaman
-                    switch(view) {
-                        case 'dashboard':
-                            mainContainer.classList.add('bg-dashboard');
-                            break;
-                        case 'pinjam':
-                            mainContainer.classList.add('bg-yellow-50');
-                            break;
-                        case 'kembalikan':
-                            mainContainer.classList.add('bg-green-50');
-                            break;
-                        case 'riwayat': // catatan peminjaman
-                            mainContainer.classList.add('bg-orange-50');
-                            break;
-                        case 'tanya_ai':
-                            mainContainer.classList.add('bg-blue-50');
-                            break;
-                        case 'panduan':
-                            mainContainer.classList.add('bg-red-50');
-                            break;
-                        default:
-                            // Tidak perlu menambahkan kelas default karena parent sudah punya bg-slate-100
-                            break;
-                    }
-
+                    App.DOM.mainContainer.classList.toggle('bg-dashboard', isDashboard);
+                    App.DOM.mainOverlay.classList.toggle('opacity-50', isDashboard);
                     const renderFunction = App.render[view];
-                    if (renderFunction) {
-                        renderFunction();
-                    } else {
-                        App.DOM.mainContent.innerHTML = `<p>Halaman tidak ditemukan.</p>`;
-                    }
-
+                    if (renderFunction) renderFunction();
+                    else App.DOM.mainContent.innerHTML = `<p>Halaman tidak ditemukan.</p>`;
                     anime({
-                        targets: '#main-content > *',
-                        opacity: [0, 1],
-                        translateY: [20, 0],
-                        duration: 400,
-                        easing: 'easeOutCubic'
+                        targets: '#main-content > *', opacity: [0, 1], translateY: [20, 0],
+                        duration: 400, easing: 'easeOutCubic'
                     });
                 },
 
                 checkLateReturns() {
                     if (!App.state.currentUser) return;
-                    const userLoans = App.state.loans.filter(l => l.userId === App.state.currentUser.id && l.returnDate === null);
+                    const userLoans = App.data.loans.filter(l => l.userId === App.state.currentUser.id && !l.returnDate);
                     const lateLoans = userLoans.filter(l => new Date() > l.dueDate);
-
                     if (lateLoans.length > 0) {
-                        const lateItems = lateLoans.map(l => {
-                            const item = App.state.items.find(i => i.id === l.itemId);
-                            return `<li><b>${item.name}</b> (Jatuh tempo: ${App.utils.formatDate(l.dueDate)})</li>`;
-                        }).join('');
-                        
-                        App.utils.showNotification('Peringatan Keterlambatan!',
-                            `Kamu punya ${lateLoans.length} barang yang telat dikembalikan: <ul>${lateItems}</ul> Segera kembalikan ya!`
-                        );
+                        const lateItems = lateLoans.map(l => `<li><b>${App.data.items.find(i => i.id === l.itemId).name}</b></li>`).join('');
+                        App.utils.showNotification('Peringatan Keterlambatan!', `Kamu punya ${lateLoans.length} barang yang telat dikembalikan: <ul>${lateItems}</ul> Segera kembalikan ya!`, 'warning');
                     }
                 },
                 
-                pinjamItem(itemId) {
-                    const userRole = App.state.currentUser.role;
-                    const borrowLimit = schoolConfig.borrowLimits[userRole];
-                    const currentBorrows = App.state.loans.filter(
-                        l => l.userId === App.state.currentUser.id && l.returnDate === null
-                    ).length;
-
-                    if (currentBorrows >= borrowLimit) {
-                        App.utils.showNotification('Kuota Habis!', `Maaf, kamu sudah mencapai batas maksimal peminjaman (${borrowLimit} barang). Kembalikan dulu barang lain untuk meminjam lagi.`);
-                        return;
-                    }
-
-                    const item = App.state.items.find(i => i.id === itemId);
+                pinjamItem(itemId, durationInDays) {
+                    const item = App.data.items.find(i => i.id === itemId);
                     if (item && item.available > 0) {
                         item.available--;
                         const newLoan = {
-                            loanId: 'L' + (App.state.loans.length + 1).toString().padStart(3, '0'),
-                            userId: App.state.currentUser.id,
-                            itemId: itemId,
-                            borrowDate: new Date(),
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 3)),
-                            returnDate: null
+                            loanId: 'L' + (App.data.loans.length + 1).toString().padStart(3, '0'),
+                            userId: App.state.currentUser.id, itemId: itemId, borrowDate: new Date(),
+                            dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null
                         };
-                        App.state.loans.push(newLoan);
-                        App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`);
+                        App.data.loans.push(newLoan);
+                        App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`, 'success');
                         App.render.pinjam();
                     }
                 },
 
                 kembalikanItem(loanId) {
-                    const loan = App.state.loans.find(l => l.loanId === loanId);
+                    const loan = App.data.loans.find(l => l.loanId === loanId);
                     if (loan) {
-                        const item = App.state.items.find(i => i.id === loan.itemId);
+                        const item = App.data.items.find(i => i.id === loan.itemId);
                         const penalty = App.utils.calculatePenalty(loan);
-                        loan.returnDate = new Date();
-                        item.available++;
+                        loan.returnDate = new Date(); item.available++;
                         let message = `Makasih ya, sudah mengembalikan <b>${item.name}</b>.`;
-                        if(penalty > 0){
-                            message += `<br><br>Eits, kamu kena denda keterlambatan <b>Rp ${penalty.toLocaleString('id-ID')}</b> nih. Lapor ke TU ya!`
+                        let type = 'success';
+                        if (penalty > 0) {
+                            message += `<br><br>Eits, kamu kena denda keterlambatan <b>Rp ${penalty.toLocaleString('id-ID')}</b> nih. Lapor ke TU ya!`;
+                            type = 'warning';
                         }
-                        App.utils.showNotification('Barang Sudah Kembali', message);
+                        App.utils.showNotification('Barang Sudah Kembali', message, type);
                         App.render.kembalikan();
                     }
                 },
+
+                addItem(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const newItem = {
+                        id: 'item' + (App.data.items.length + 1).toString().padStart(2, '0'),
+                        name: form.itemName.value, category: form.itemCategory.value,
+                        total: parseInt(form.itemTotal.value), available: parseInt(form.itemTotal.value),
+                        icon: form.itemIcon.value || 'archive'
+                    };
+                    App.data.items.push(newItem);
+                    App.utils.showNotification('Berhasil!', `Aset baru "${newItem.name}" telah ditambahkan.`, 'success');
+                    form.reset();
+                    App.render.kelola_aset();
+                },
+
+                exportToExcel() {
+                    const dataToExport = App.data.loans.map(loan => {
+                        const user = App.data.users.find(u => u.id === loan.userId);
+                        const item = App.data.items.find(i => i.id === loan.itemId);
+                        let status = loan.returnDate ? "Sudah Dikembalikan" : (new Date() > loan.dueDate ? "Terlambat" : "Dipinjam");
+                        return { "ID Pinjam": loan.loanId, "Nama Barang": item.name, "Peminjam": user.name, "Peran": user.role, "Tanggal Pinjam": App.utils.formatDate(loan.borrowDate), "Jatuh Tempo": App.utils.formatDate(loan.dueDate), "Tanggal Kembali": loan.returnDate ? App.utils.formatDate(loan.returnDate) : '-', "Status": status, "Denda (Rp)": App.utils.calculatePenalty(loan) };
+                    });
+                    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Peminjaman");
+                    XLSX.writeFile(workbook, `Laporan Peminjaman SIPINJOL - ${new Date().toLocaleDateString('id-ID')}.xlsx`);
+                },
+
+                sendMessage(receiverId, messageText) {
+                    if (!messageText.trim()) return;
+                    const newMessage = {
+                        chatId: 'C' + (App.data.chats.length + 1).toString().padStart(3, '0'),
+                        senderId: App.state.currentUser.id, receiverId: receiverId,
+                        message: messageText, timestamp: new Date(), isRead: false
+                    };
+                    App.data.chats.push(newMessage);
+                    App.render.chat(receiverId);
+                },
+                
+                getMostPopularItem() {
+                    if (App.data.loans.length === 0) return null;
+                    const counts = App.data.loans.reduce((acc, loan) => {
+                        acc[loan.itemId] = (acc[loan.itemId] || 0) + 1;
+                        return acc;
+                    }, {});
+                    const popularId = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    return App.data.items.find(item => item.id === popularId);
+                }
             },
 
             // Fungsi untuk Merender Tampilan
             render: {
                 sidebar() {
-                    const navLinks = [
+                    let navLinks = [
                         { id: 'dashboard', text: 'Beranda', icon: ICONS.dashboard, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'pinjam', text: 'Pinjam Barang', icon: ICONS.archive, roles: ['guru', 'siswa'] },
                         { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'riwayat', text: 'Catatan Peminjaman', icon: ICONS.history, roles: ['admin', 'guru', 'siswa'] },
+                        { id: 'kelola_aset', text: 'Kelola Aset', icon: ICONS.kelola_aset, roles: ['admin'] },
                         { id: 'laporan', text: 'Laporan TU', icon: ICONS.file_text, roles: ['admin'] },
-                        { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'], isSpecial: true },
+                        { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
+                        { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
+                        { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'panduan', text: 'Panduan Aplikasi', icon: ICONS.help, roles: ['admin', 'guru', 'siswa'] },
                     ];
-
-                    App.DOM.sidebarNav.innerHTML = navLinks
-                        .filter(link => link.roles.includes(App.state.currentUser.role))
-                        .map(link => `
-                            <a href="#" class="sidebar-link ${link.isSpecial ? 'rainbow-animate' : ''}" data-view="${link.id}">
-                                <span class="mr-3">${link.icon}</span>
-                                <span>${link.text}</span>
-                            </a>
-                        `).join('');
+                    const unreadMessages = App.data.chats.filter(c => c.receiverId === App.state.currentUser.id && !c.isRead).length;
+                    const currentUserRole = App.state.currentUser.role;
+                    const visibleLinks = navLinks.filter(link => link.roles.includes(currentUserRole));
                     
+                    const sequentialColors = [
+                        'bg-red-500/90 hover:bg-red-500 text-white',
+                        'bg-orange-500/90 hover:bg-orange-500 text-white',
+                        'bg-amber-500/90 hover:bg-amber-500 text-white',
+                        'bg-lime-500/90 hover:bg-lime-500 text-white',
+                        'bg-green-500/90 hover:bg-green-500 text-white',
+                        'bg-teal-500/90 hover:bg-teal-500 text-white',
+                        'bg-sky-500/90 hover:bg-sky-500 text-white',
+                        'bg-indigo-500/90 hover:bg-indigo-500 text-white' // Nila
+                    ];
+
+                    let colorCounter = 0;
+
+                    App.DOM.sidebarNav.innerHTML = visibleLinks
+                        .map((link, index) => {
+                            const isChatAdmin = link.text === 'Pesan Masuk' && unreadMessages > 0;
+                            let extraClasses = '';
+                            
+                            if (currentUserRole === 'admin') {
+                                if (link.id === 'tanya_ai') {
+                                    extraClasses = 'ai-button-animated text-white font-bold';
+                                } else {
+                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                    colorCounter++;
+                                }
+                            } else { // Untuk 'guru' dan 'siswa'
+                                if (link.id === 'tanya_ai') {
+                                    extraClasses = 'ai-button-animated text-white font-bold';
+                                } else {
+                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                    colorCounter++;
+                                }
+                            }
+
+                            return `<a href="#" class="sidebar-link ${extraClasses}" data-view="${link.id}"><span class="mr-3">${link.icon}</span><span>${link.text}</span>${isChatAdmin ? `<span class="notification-badge">${unreadMessages}</span>` : ''}</a>`
+                        }).join('');
+                        
                     document.querySelectorAll('.sidebar-link').forEach(link => {
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            App.logic.navigateTo(link.dataset.view);
-                        });
+                        link.addEventListener('click', (e) => { e.preventDefault(); App.logic.navigateTo(link.dataset.view); });
                     });
                 },
 
-                userProfile() {
-                    App.DOM.userProfile.innerHTML = `
-                        ${ICONS.user}
-                        <div>
-                            <p class="font-semibold text-gray-800">${App.state.currentUser.name}</p>
-                            <p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p>
-                        </div>
-                    `;
-                },
-
+                userProfile() { /* same as before */ },
                 dashboard() {
-                    const randomFact = schoolData.funFacts[Math.floor(Math.random() * schoolData.funFacts.length)];
-                    const announcement = schoolData.announcements[Math.floor(Math.random() * schoolData.announcements.length)];
+                    const announcement = App.data.announcements[Math.floor(Math.random() * App.data.announcements.length)];
+                    const popularItem = App.logic.getMostPopularItem();
                     App.DOM.mainContent.innerHTML = `
                         <div class="space-y-6">
                             <div>
                                 <h2 class="text-3xl font-bold text-white mb-2" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">${App.utils.getGreeting()}, ${App.state.currentUser.name}!</h2>
                                 <p class="text-white" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">${App.utils.getGreetingSubtext()}</p>
                             </div>
-                            
-                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <!-- Pengumuman Sekolah -->
-                                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-md lg:col-span-2">
-                                    <h3 class="font-bold text-xl text-blue-600 mb-3">${announcement.icon} Pengumuman Sekolah</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="lg:col-span-2 bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-md">
+                                    <h3 class="font-bold text-xl text-blue-600 mb-3">${announcement.icon} Papan Pengumuman</h3>
                                     <p class="font-semibold text-gray-800">${announcement.title}</p>
                                     <p class="text-gray-700">${announcement.content}</p>
                                 </div>
-                                
-                                <!-- Wawasan Keren -->
                                 <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-md">
-                                    <h3 class="font-bold text-xl text-indigo-600 mb-3">💡 Wawasan Keren</h3>
-                                    <p class="text-gray-700">${randomFact}</p>
+                                    <h3 class="font-bold text-xl text-indigo-600 mb-3">⭐ Paling Populer</h3>
+                                    ${popularItem ? `
+                                        <div class="flex items-center gap-4">
+                                            <span class="text-3xl">${ICONS[popularItem.icon] || ICONS.archive}</span>
+                                            <div>
+                                                <p class="font-semibold text-gray-800">${popularItem.name}</p>
+                                                <p class="text-sm text-gray-600">Jadi favorit untuk dipinjam!</p>
+                                            </div>
+                                        </div>
+                                    ` : `<p class="text-gray-600">Belum ada data peminjaman.</p>`}
                                 </div>
-                            </div>
-                        </div>
-                    `;
-                },
-
-                pinjam() {
-                    const userRole = App.state.currentUser.role;
-                    const borrowLimit = schoolConfig.borrowLimits[userRole];
-                    const currentBorrows = App.state.loans.filter(
-                        l => l.userId === App.state.currentUser.id && l.returnDate === null
-                    ).length;
-                    const canBorrowMore = currentBorrows < borrowLimit;
-
-                    const limitInfoHtml = `
-                        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6" role="alert">
-                            <p class="font-bold">Kuota Peminjaman Kamu</p>
-                            <p>Saat ini kamu sudah meminjam <strong>${currentBorrows} dari ${borrowLimit}</strong> barang yang diizinkan.</p>
-                        </div>
-                    `;
-
-                    let itemsHtml = App.state.items.map(item => `
-                        <div class="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center">
-                            <div class="text-blue-500 mb-3">${ICONS[item.icon] || ICONS.archive}</div>
-                            <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
-                            <p class="text-gray-500 text-sm mb-3">Sisa: ${item.available} / ${item.total}</p>
-                            <button class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                onclick="App.logic.pinjamItem('${item.id}')" ${item.available === 0 || !canBorrowMore ? 'disabled' : ''}>
-                                ${item.available === 0 ? 'Lagi Dipakai' : (canBorrowMore ? 'Pinjam' : 'Kuota Penuh')}
-                            </button>
-                        </div>
-                    `).join('');
-
-                    App.DOM.mainContent.innerHTML = `
-                        <div>
-                            <h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Barang</h2>
-                            ${limitInfoHtml}
-                            ${!canBorrowMore ? `<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6" role="alert"><p>Kamu tidak bisa meminjam barang lagi sampai ada barang yang dikembalikan.</p></div>` : ''}
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">${itemsHtml}</div>
-                        </div>
-                    `;
-                },
-
-                kembalikan() {
-                    const loansToReturn = App.state.loans.filter(l => 
-                        (App.state.currentUser.role === 'admin' || l.userId === App.state.currentUser.id) && l.returnDate === null
-                    ).sort((a,b) => a.dueDate - b.dueDate);
-
-                    let loansHtml = loansToReturn.map(loan => {
-                        const item = App.state.items.find(i => i.id === loan.itemId);
-                        const user = schoolData.users.find(u => u.id === loan.userId);
-                        const isLate = new Date() > loan.dueDate;
-                        return `
-                            <tr class="border-b ${isLate ? 'bg-red-50' : ''}">
-                                <td class="py-3 px-4">${item.name}</td>
-                                ${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}
-                                <td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td>
-                                <td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-600" onclick="App.logic.kembalikanItem('${loan.loanId}')">Kembalikan</button></td>
-                            </tr>`;
-                    }).join('');
-            
-                    if (loansToReturn.length === 0) {
-                        loansHtml = `<tr><td colspan="4" class="text-center py-8 text-gray-500">Aman! Gak ada barang yang sedang kamu pinjam.</td></tr>`;
-                    }
-
-                    App.DOM.mainContent.innerHTML = `
-                        <div>
-                            <h2 class="text-3xl font-bold text-gray-800 mb-6">Kembalikan Barang</h2>
-                            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                                <table class="w-full text-sm text-left text-gray-600">
-                                    <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
-                                        <tr>
-                                            <th class="py-3 px-4">Nama Barang</th>
-                                            ${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}
-                                            <th class="py-3 px-4">Jatuh Tempo</th>
-                                            <th class="py-3 px-4">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${loansHtml}</tbody>
-                                </table>
                             </div>
                         </div>`;
                 },
-                
-                riwayat() { /* Implementasi sama seperti sebelumnya, disesuaikan dengan struktur App */ },
-                laporan() { /* Implementasi sama seperti sebelumnya, disesuaikan dengan struktur App */ },
-                tanya_ai() { /* Implementasi sama seperti sebelumnya, disesuaikan dengan struktur App */ },
-                panduan() { /* Implementasi sama seperti sebelumnya, disesuaikan dengan struktur App */ },
+                pinjam() { /* same as before */ },
+                kembalikan() { /* same as before */ },
+                riwayat() { /* same as before */ },
+                kelola_aset() { /* same as before */ },
+                laporan() { 
+                     const allLoans = App.data.loans;
+                     const activeLoans = allLoans.filter(l => !l.returnDate);
+                     const lateLoans = activeLoans.filter(l => new Date() > l.dueDate);
+                     const totalPenalty = allLoans.reduce((sum, loan) => sum + App.utils.calculatePenalty(loan), 0);
+                     const stats = [
+                        {label: 'Total Peminjaman', value: allLoans.length, icon: ICONS.history},
+                        {label: 'Sedang Dipinjam', value: activeLoans.length, icon: ICONS.archive},
+                        {label: 'Keterlambatan', value: lateLoans.length, icon: ICONS.modal_warning},
+                        {label: 'Total Potensi Denda', value: `Rp ${totalPenalty.toLocaleString('id-ID')}`, icon: ICONS.file_text},
+                     ];
 
+                    App.DOM.mainContent.innerHTML = `
+                        <div>
+                            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                                <h2 class="text-3xl font-bold text-gray-800">Laporan Peminjaman</h2>
+                                <button id="export-excel-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-green-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    Ekspor ke Excel
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                ${stats.map(s => `<div class="bg-white p-4 rounded-xl shadow-md flex items-center gap-4"><div class="text-blue-500">${s.icon}</div><div><p class="text-gray-600">${s.label}</p><p class="text-2xl font-bold">${s.value}</p></div></div>`).join('')}
+                            </div>
+                            <div class="bg-white rounded-xl shadow-md p-6">
+                                <h3 class="text-xl font-bold mb-4">Detail Semua Peminjaman</h3>
+                                <div class="overflow-x-auto">
+                                    <p class="text-gray-600">Tabel detail akan ditampilkan di sini dalam versi selanjutnya. Gunakan tombol Ekspor untuk melihat data lengkap.</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    document.getElementById('export-excel-btn').addEventListener('click', App.logic.exportToExcel);
+                },
+                chat(contactId) { /* same as before */ },
+                tanya_ai() { /* same as before */ },
+                panduan() { /* same as before */ },
             },
             
             // Fungsi Bantuan
             utils: {
-                showNotification(title, message) {
+                showNotification(title, message, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
-                    App.DOM.modalMessage.innerHTML = message;
+                    App.DOM.modalBody.innerHTML = message;
+                    App.DOM.modalIconContainer.innerHTML = type === 'success' ? ICONS.modal_success : (type === 'warning' ? ICONS.modal_warning : '');
+                    App.DOM.modalFooter.innerHTML = `<button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="App.utils.hideModal()">Siap!</button>`;
                     App.DOM.modal.classList.add('show');
                 },
-                formatDate(date) {
-                    return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                showBorrowModal(itemId) {
+                    const item = App.data.items.find(i => i.id === itemId);
+                    const modalBody = `
+                        <p class="mb-4">Kamu akan meminjam: <strong>${item.name}</strong></p>
+                        <label for="borrowDuration" class="block text-sm font-medium text-left mb-2">Pilih durasi peminjaman:</label>
+                        <select id="borrowDuration" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="1">1 Hari</option> <option value="3" selected>3 Hari</option> <option value="7">7 Hari (1 Minggu)</option>
+                        </select>`;
+                    const modalFooter = `<button id="confirm-borrow-btn" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Konfirmasi Pinjam</button>`;
+                    App.utils.showModal(`Pinjam Barang`, modalBody, modalFooter);
+                    document.getElementById('confirm-borrow-btn').onclick = () => {
+                        const duration = document.getElementById('borrowDuration').value;
+                        App.logic.pinjamItem(itemId, parseInt(duration));
+                        App.utils.hideModal();
+                    };
                 },
+                showModal(title, bodyHtml, footerHtml) {
+                    App.DOM.modalTitle.textContent = title;
+                    App.DOM.modalBody.innerHTML = bodyHtml;
+                    App.DOM.modalIconContainer.innerHTML = '';
+                    App.DOM.modalFooter.innerHTML = footerHtml || `<button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="App.utils.hideModal()">Tutup</button>`;
+                    App.DOM.modal.classList.add('show');
+                },
+                hideModal() { App.DOM.modal.classList.remove('show'); },
+                formatDate(date) { return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); },
                 calculatePenalty(loan) {
-                    if (loan.returnDate || new Date() <= loan.dueDate) return 0;
-                    const diffTime = Math.abs(new Date() - loan.dueDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    return diffDays * schoolConfig.penaltyPerDay;
+                    if (!loan.returnDate && new Date() > loan.dueDate) {
+                        return App.config.penalty; // Denda flat
+                    }
+                    return 0;
                 },
-                getGreeting() {
-                    const hour = new Date().getHours();
-                    if (hour < 11) return "Selamat Pagi";
-                    if (hour < 15) return "Selamat Siang";
-                    if (hour < 18) return "Selamat Sore";
-                    return "Selamat Malam";
-                },
-                 getGreetingSubtext() {
-                    const hour = new Date().getHours();
-                    if (hour < 11) return "Jangan lupa sarapan dan semangat belajar ya!";
-                    if (hour < 15) return "Sudah masuk jam istirahat, jangan lupa jajan di kantin!";
-                    if (hour < 18) return "Sudah waktunya pulang, hati-hati di jalan!";
-                    return "Waktunya istirahat, jangan begadang ya!";
-                },
-                makeDraggable(element) {
-                    let isDragging = false, offsetX, offsetY;
-                    element.onmousedown = (e) => {
-                        isDragging = true;
-                        offsetX = e.clientX - element.getBoundingClientRect().left;
-                        offsetY = e.clientY - element.getBoundingClientRect().top;
-                        element.classList.add('dragging');
-                        e.preventDefault();
-                    };
-                    document.onmousemove = (e) => {
-                        if (!isDragging) return;
-                        let newX = e.clientX - offsetX;
-                        let newY = e.clientY - offsetY;
-                        const maxX = window.innerWidth - element.offsetWidth;
-                        const maxY = window.innerHeight - element.offsetHeight;
-                        element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
-                        element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-                        element.style.bottom = 'auto';
-                        element.style.right = 'auto';
-                    };
-                    document.onmouseup = () => {
-                        isDragging = false;
-                        element.classList.remove('dragging');
-                    };
-                },
-                setupCustomCursor() {
-                    const cursorDot = document.getElementById('cursor-dot');
-                    const cursorOutline = document.getElementById('cursor-outline');
-
-                    window.addEventListener('mousemove', (e) => {
-                        const posX = e.clientX;
-                        const posY = e.clientY;
-
-                        cursorDot.style.left = `${posX}px`;
-                        cursorDot.style.top = `${posY}px`;
-                        
-                        anime({
-                            targets: '#cursor-outline',
-                            left: `${posX}px`,
-                            top: `${posY}px`,
-                            duration: 400,
-                            easing: 'easeOutExpo'
-                        });
-                    });
-                },
-                setupButtonClickAnimation() {
-                    document.addEventListener('mousedown', (e) => {
-                        if (e.target.matches('button, .sidebar-link, [onclick]')) {
-                            anime({
-                                targets: e.target,
-                                scale: [
-                                    { value: 0.95, duration: 100, easing: 'easeOutQuad' },
-                                    { value: 1, duration: 200, easing: 'easeOutBack' }
-                                ]
-                            });
-                        }
-                    });
-                },
-                 getAIResponse(question) {
-                    const q = question.toLowerCase();
-                    if (q.includes('sejarah') || q.includes('berdiri')) return "SMAN 1 Dramaga didirikan pada tahun 1983. Awalnya, sekolah ini menumpang di gedung SMPN 1 Dramaga, tapi sekarang sudah jadi sekolah kebanggaan kita semua!";
-                    if (q.includes('visi') || q.includes('misi')) return "Visi sekolah kita adalah 'Terwujudnya Lulusan yang Unggul dalam Prestasi, Berkarakter, dan Berwawasan Lingkungan'. Keren kan!";
-                    if (q.includes('kepala sekolah') || q.includes('kepsek')) return "Kepala Sekolah kita saat ini adalah Bapak Bambang Supriyadi, S.Pd. Beliau asyik dan peduli banget sama kita-kita.";
-                    if (q.includes('ekskul') || q.includes('ekstrakurikuler')) return "Banyak banget! Ada Paskibra (KOPASDRA), Pramuka, KIR, Futsal, Basket, Voli, Paduan Suara, dan English Club. Kamu ikut yang mana?";
-                    if (q.includes('jam pelajaran') || q.includes('masuk jam berapa')) return "Bel masuk bunyi jam 07:00 pagi. Pulang jam 15:30 untuk Senin-Kamis, dan jam 14:00 khusus hari Jumat.";
-                    if (q.includes('perpus') || q.includes('perpustakaan')) return "Perpustakaan buka dari jam 07:30 pagi sampai 16:00 sore. Tempatnya adem dan bukunya lengkap, lho!";
-                    if (q.includes('kantin') || q.includes('jajan')) return "Kantin ada di deket lapangan basket. Jajanannya macem-macem, dari batagor sampai es teh legendaris Bu Kantin ada semua!";
-                    if (q.includes('halo') || q.includes('hai')) return `Halo juga, ${App.state.currentUser.name}! Ada yang bisa dibantu? Tanya aja, santai.`;
-                    return "Waduh, aku belum diajarin soal itu. Coba tanya tentang 'sejarah sekolah' atau 'ekskul' deh, aku jago kalau soal itu!";
-                }
+                getGreeting() { const h = new Date().getHours(); return h<11 ? "Selamat Pagi" : h<15 ? "Selamat Siang" : h<18 ? "Selamat Sore" : "Selamat Malam"; },
+                getGreetingSubtext() { const h = new Date().getHours(); return h<11 ? "Jangan lupa sarapan dan semangat belajar ya!" : h<15 ? "Sudah masuk jam istirahat, jangan lupa jajan di kantin!" : h<18 ? "Sudah waktunya pulang, hati-hati di jalan!" : "Waktunya istirahat, jangan begadang ya!"; },
+                makeDraggable(element) { let isDragging = false, offsetX, offsetY; element.onmousedown = (e) => { isDragging = true; offsetX = e.clientX - element.getBoundingClientRect().left; offsetY = e.clientY - element.getBoundingClientRect().top; element.classList.add('dragging'); e.preventDefault(); }; document.onmousemove = (e) => { if (!isDragging) return; let newX = e.clientX - offsetX; let newY = e.clientY - offsetY; const maxX = window.innerWidth - element.offsetWidth; const maxY = window.innerHeight - element.offsetHeight; element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`; element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`; element.style.bottom = 'auto'; element.style.right = 'auto'; }; document.onmouseup = () => { isDragging = false; element.classList.remove('dragging'); }; },
+                getAIResponse(question) { /* same as before */ }
             }
         };
 
         // Inisialisasi Aplikasi ketika DOM siap
         document.addEventListener('DOMContentLoaded', () => App.init());
-
-        // Menambahkan fungsi render yang belum ada
+        
+        // --- Implementasi Fungsi Render yang Kompleks (di luar objek utama untuk kerapian) ---
+        App.render.userProfile = function() { App.DOM.userProfile.innerHTML = `${ICONS.user}<div><p class="font-semibold text-gray-800">${App.state.currentUser.name}</p><p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p></div>`; };
+        App.render.pinjam = function() {
+            const categories = [...new Set(App.data.items.map(item => item.category))];
+            let itemsHtml = categories.map(category => {
+                const itemsInCategory = App.data.items.filter(item => item.category === category);
+                return `<div class="mb-8"><h3 class="text-xl font-bold text-gray-700 mb-4 pb-2 border-b-2 border-blue-200">${category}</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                ${itemsInCategory.map(item => `<div class="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center">
+                    <div class="text-blue-500 mb-3">${ICONS[item.icon] || ICONS.archive}</div>
+                    <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                    <p class="text-gray-500 text-sm mb-3">Sisa: ${item.available} / ${item.total}</p>
+                    <button class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                        onclick="App.utils.showBorrowModal('${item.id}')" ${item.available === 0 ? 'disabled' : ''}>
+                        ${item.available === 0 ? 'Lagi Dipakai' : 'Pinjam'}
+                    </button></div>`).join('')}</div></div>`;
+            }).join('');
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Barang Inventaris</h2>${itemsHtml}</div>`;
+        };
+        App.render.kembalikan = function() { /* same as previous version */ };
+        App.render.riwayat = function() { /* same as previous version */ };
+        App.render.kelola_aset = function() { /* same as previous version */ };
+        App.render.chat = function(activeChatUserId) { /* same as previous version */ };
+        App.render.tanya_ai = function() { /* same as previous version */ };
+        App.render.panduan = function() { /* same as previous version */ };
+        App.render.kembalikan = function() {
+            const loansToReturn = App.data.loans.filter(l => (App.state.currentUser.role === 'admin' || l.userId === App.state.currentUser.id) && !l.returnDate).sort((a,b) => a.dueDate - b.dueDate);
+            let loansHtml = loansToReturn.map(loan => {
+                const item = App.data.items.find(i => i.id === loan.itemId);
+                const user = App.data.users.find(u => u.id === loan.userId);
+                const isLate = new Date() > loan.dueDate;
+                return `<tr class="border-b ${isLate ? 'bg-red-50' : ''}"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td><td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg" onclick="App.logic.kembalikanItem('${loan.loanId}')">Kembalikan</button></td></tr>`;
+            }).join('') || `<tr><td colspan="4" class="text-center py-8 text-gray-500">Aman! Gak ada barang yang sedang kamu pinjam.</td></tr>`;
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kembalikan Barang</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Jatuh Tempo</th><th class="py-3 px-4">Aksi</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
+        };
         App.render.riwayat = function() {
-            let userLoans = (App.state.currentUser.role === 'admin') 
-                ? [...App.state.loans] 
-                : App.state.loans.filter(l => l.userId === App.state.currentUser.id);
+            let userLoans = (App.state.currentUser.role === 'admin') ? [...App.data.loans] : App.data.loans.filter(l => l.userId === App.state.currentUser.id);
             userLoans.sort((a, b) => b.borrowDate - a.borrowDate);
-
             const loansHtml = userLoans.map(loan => {
-                const item = App.state.items.find(i => i.id === loan.itemId);
-                const user = schoolData.users.find(u => u.id === loan.userId);
-                const isLate = !loan.returnDate && new Date() > loan.dueDate;
-                
+                const item = App.data.items.find(i => i.id === loan.itemId);
+                const user = App.data.users.find(u => u.id === loan.userId);
                 let statusBadge;
-                if (loan.returnDate) {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Sudah Kembali</span>`;
-                } else if (isLate) {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Telat</span>`;
-                } else {
-                    statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Dipinjam</span>`;
-                }
-
-                return `<tr class="border-b">
-                            <td class="py-3 px-4">${item.name}</td>
-                            ${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}
-                            <td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td>
-                            <td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td>
-                            <td class="py-3 px-4">${statusBadge}</td>
-                        </tr>`;
+                if (loan.returnDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Sudah Kembali</span>`;
+                else if (new Date() > loan.dueDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Telat</span>`;
+                else statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Dipinjam</span>`;
+                return `<tr class="border-b"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td><td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td><td class="py-3 px-4">${statusBadge}</td></tr>`;
             }).join('') || `<tr><td colspan="5" class="text-center py-8 text-gray-500">Belum ada catatan peminjaman.</td></tr>`;
-
-            App.DOM.mainContent.innerHTML = `<div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2>
-                <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <table class="w-full text-sm text-left text-gray-600">
-                    <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
-                        <tr>
-                            <th class="py-3 px-4">Nama Barang</th>
-                            ${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}
-                                <th class="py-3 px-4">Tgl Pinjam</th>
-                                <th class="py-3 px-4">Tgl Kembali</th>
-                                <th class="py-3 px-4">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>${loansHtml}</tbody>
-                    </table>
-                </div>
-            </div>`;
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Tgl Pinjam</th><th class="py-3 px-4">Tgl Kembali</th><th class="py-3 px-4">Status</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
         };
-
-        App.render.laporan = function() {
-            if (App.state.currentUser.role !== 'admin') {
-                App.DOM.mainContent.innerHTML = `<p>Hanya tim TU yang boleh buka halaman ini.</p>`;
-                return;
-            }
-
-            // --- Logika untuk mempersiapkan data tabel ---
-
-            // 1. Data untuk Tabel Status Peminjaman
-            const returnedLoans = App.state.loans.filter(l => l.returnDate !== null).length;
-            const activeLoans = App.state.loans.length - returnedLoans;
-            const totalLoans = App.state.loans.length;
-
-            // 2. Data untuk Tabel Barang Populer
-            const itemLoanCounts = {};
-            App.state.loans.forEach(loan => {
-                const item = App.state.items.find(i => i.id === loan.itemId);
-                if (item) {
-                    itemLoanCounts[item.name] = (itemLoanCounts[item.name] || 0) + 1;
+        App.render.kelola_aset = function() {
+            const itemsHtml = App.data.items.map(item => `<tr class="border-b"><td class="py-2 px-3">${item.name}</td><td class="py-2 px-3">${item.category}</td><td class="py-2 px-3 text-center">${item.available} / ${item.total}</td></tr>`).join('');
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kelola Aset Sekolah</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Daftar Aset Saat Ini</h3><div class="max-h-96 overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-3">Nama Barang</th><th class="py-3 px-3">Kategori</th><th class="py-3 px-3 text-center">Tersedia</th></tr></thead><tbody>${itemsHtml}</tbody></table></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Tambah Aset Baru</h3><form id="add-item-form" class="space-y-4"><div><label for="itemName" class="block text-sm font-medium">Nama Barang</label><input type="text" id="itemName" name="itemName" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemCategory" class="block text-sm font-medium">Kategori</label><select id="itemCategory" name="itemCategory" class="mt-1 w-full px-3 py-2 border rounded-lg" required><option>Elektronik</option><option>Olahraga</option><option>Laboratorium</option><option>Kelas</option><option>Lainnya</option></select></div><div><label for="itemTotal" class="block text-sm font-medium">Jumlah Total</label><input type="number" id="itemTotal" name="itemTotal" min="1" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemIcon" class="block text-sm font-medium">Nama Ikon (dari Lucide)</label><input type="text" id="itemIcon" name="itemIcon" placeholder="cth: archive" class="mt-1 w-full px-3 py-2 border rounded-lg"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Tambah</button></form></div></div></div>`;
+            document.getElementById('add-item-form').addEventListener('submit', App.logic.addItem);
+        };
+        App.render.chat = function(activeChatUserId) { /* same as previous version */ };
+        App.render.tanya_ai = function() { /* same as previous version */ };
+        App.render.panduan = function() { /* same as previous version */ };
+        App.render.chat = function(activeChatUserId) {
+            const currentUser = App.state.currentUser;
+            if (currentUser.role === 'admin') {
+                const messageSenders = [...new Set(App.data.chats.map(c => c.senderId).filter(id => id !== currentUser.id))];
+                const unreadCounts = messageSenders.reduce((acc, senderId) => { acc[senderId] = App.data.chats.filter(c => c.senderId === senderId && !c.isRead).length; return acc; }, {});
+                const contactListHtml = messageSenders.map(senderId => { const sender = App.data.users.find(u => u.id === senderId); const isActive = senderId === activeChatUserId; return `<div class="p-3 border-b cursor-pointer ${isActive ? 'bg-blue-100' : 'hover:bg-slate-50'}" onclick="App.render.chat('${senderId}')"><p class="font-semibold">${sender.name} ${unreadCounts[senderId] > 0 ? `<span class="ml-2 text-xs text-white bg-red-500 rounded-full px-2 py-1">${unreadCounts[senderId]}</span>` : ''}</p><p class="text-xs text-gray-500">${sender.role}</p></div>`; }).join('') || `<div class="p-4 text-center text-gray-500">Belum ada pesan masuk.</div>`;
+                let chatBoxHtml = `<div class="h-full flex items-center justify-center text-gray-500">Pilih percakapan untuk ditampilkan.</div>`;
+                if(activeChatUserId) {
+                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); App.render.sidebar();
+                    const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === activeChatUserId) || (c.senderId === activeChatUserId && c.receiverId === currentUser.id));
+                    chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik balasan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
                 }
-            });
-            const sortedItems = Object.entries(itemLoanCounts).sort((a, b) => b[1] - a[1]);
-
-            // --- HTML untuk Tabel ---
-
-            const statusTableHtml = `
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h3 class="font-bold text-lg mb-4 text-gray-700">Status Peminjaman</h3>
-                    <table class="w-full text-sm text-left text-gray-600">
-                        <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
-                            <tr><th class="py-3 px-4">Kategori</th><th class="py-3 px-4">Jumlah</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b"><td class="py-3 px-4">Sudah Dikembalikan</td><td class="py-3 px-4">${returnedLoans}</td></tr>
-                            <tr class="border-b"><td class="py-3 px-4">Sedang Dipinjam</td><td class="py-3 px-4">${activeLoans}</td></tr>
-                            <tr class="font-bold bg-slate-50"><td class="py-3 px-4">Total Transaksi</td><td class="py-3 px-4">${totalLoans}</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            const popularItemsTableHtml = `
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h3 class="font-bold text-lg mb-4 text-gray-700">Barang Paling Sering Dipinjam</h3>
-                    <table class="w-full text-sm text-left text-gray-600">
-                         <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
-                            <tr>
-                                <th class="py-3 px-4">Peringkat</th>
-                                <th class="py-3 px-4">Nama Barang</th>
-                                <th class="py-3 px-4">Total Dipinjam</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sortedItems.map((item, index) => `
-                                <tr class="border-b">
-                                    <td class="py-3 px-4 font-bold">${index + 1}</td>
-                                    <td class="py-3 px-4">${item[0]}</td>
-                                    <td class="py-3 px-4">${item[1]} kali</td>
-                                </tr>
-                            `).join('') || `<tr><td colspan="3" class="text-center py-4">Belum ada data.</td></tr>`}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            
-             App.DOM.mainContent.innerHTML = `
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Laporan Peminjaman Barang</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        ${statusTableHtml}
-                        ${popularItemsTableHtml}
-                    </div>
-                </div>`;
+                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pesan Masuk</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-xl shadow-md" style="height: 60vh;"><div class="md:col-span-1 border-r overflow-y-auto">${contactListHtml}</div><div class="md:col-span-2 flex flex-col">${chatBoxHtml}</div></div></div>`;
+                if(activeChatUserId && document.getElementById('chat-form')) {
+                    document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(activeChatUserId, document.getElementById('chat-input').value); });
+                    document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
+                }
+            } else { 
+                const adminId = 'adm01';
+                const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === adminId) || (c.senderId === adminId && c.receiverId === currentUser.id));
+                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat dengan Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 70vh;"><div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div></div></div>`;
+                document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(adminId, document.getElementById('chat-input').value); });
+                document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
+            }
         };
-
-        App.render.panduan = function() {
-            App.DOM.mainContent.innerHTML = `
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Buku Panduan SIPINJOL</h2>
-                    <div class="space-y-6 bg-white p-6 rounded-xl shadow-md">
-                        <div>
-                            <h3 class="text-xl font-bold mb-2">1. Absen & Beranda</h3>
-                            <p>Masuk pakai akunmu. Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold mb-2">2. Pinjam & Kembalikan</h3>
-                            <p>Pilih 'Pinjam Barang' buat cari barang. Kalau sudah selesai, balikin lewat menu 'Kembalikan Barang'. Gampang kan?</p>
-                        </div>
-                         <div>
-                            <h3 class="text-xl font-bold mb-2">3. Tanya Kakak AI</h3>
-                            <p>Kalau bingung soal sekolah, tanya aja ke 'Kakak AI'. Dia tahu banyak hal, dari sejarah sekolah sampai info ekskul.</p>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold mb-2">4. Kartu Pelajar Digital</h3>
-                            <p>Kartu profilmu di pojok kanan bawah itu ibarat kartu pelajar. Kerennya, bisa kamu geser-geser sesuka hati!</p>
-                        </div>
-                    </div>
-                </div>`;
-        };
-
         App.render.tanya_ai = function() {
-            App.DOM.mainContent.innerHTML = `
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Tanya Kakak AI</h2>
-                    <p class="text-gray-600 mb-6">Asisten virtual sekolah yang siap bantu kamu.</p>
-                    
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div id="ai-response-area" class="h-96 bg-slate-100 rounded-lg p-4 mb-4 overflow-y-auto text-gray-700 leading-relaxed">
-                            <p><strong>Kakak AI:</strong> Halo! Aku asisten AI SMAN 1 Dramaga. Ada yang bisa dibantu? Tanya aja soal ekskul, sejarah sekolah, atau lokasi kantin!</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <input type="text" id="ai-question-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Ketik pertanyaanmu...">
-                            <button id="ai-ask-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button>
-                        </div>
-                    </div>
-                </div>`;
-
-            const askBtn = document.getElementById('ai-ask-btn');
-            const questionInput = document.getElementById('ai-question-input');
-            const responseArea = document.getElementById('ai-response-area');
-
-            const askAI = () => {
-                const question = questionInput.value.trim();
-                if (!question) return;
-
-                responseArea.innerHTML += `<p class="mt-2 text-right"><strong>Kamu:</strong> ${question}</p>`;
-                questionInput.value = '';
-
-                const typing = document.createElement('p');
-                typing.innerHTML = `<strong>Kakak AI:</strong> Ngetik...`;
-                responseArea.appendChild(typing);
-                responseArea.scrollTop = responseArea.scrollHeight;
-
-                setTimeout(() => {
-                    const answer = App.utils.getAIResponse(question);
-                    typing.remove();
-                    responseArea.innerHTML += `<p class="mt-2"><strong>Kakak AI:</strong> ${answer}</p>`;
-                    responseArea.scrollTop = responseArea.scrollHeight;
-                }, 1200);
-            };
-
-            askBtn.addEventListener('click', askAI);
-            questionInput.addEventListener('keypress', (e) => e.key === 'Enter' && askAI());
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-2">Tanya Kakak AI</h2><p class="text-gray-600 mb-6">Asisten virtual sekolah yang siap bantu kamu.</p><div class="bg-white rounded-xl shadow-md p-6"><div id="ai-response-area" class="h-96 bg-slate-100 rounded-lg p-4 mb-4 overflow-y-auto text-gray-700 leading-relaxed"><p><strong>Kakak AI:</strong> Halo! Aku asisten AI SMAN 1 Dramaga. Ada yang bisa dibantu? Tanya aja soal ekskul, sejarah sekolah, atau lokasi kantin!</p></div><div class="flex space-x-2"><input type="text" id="ai-question-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pertanyaanmu..."><button id="ai-ask-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></div></div></div>`;
+            const askBtn = document.getElementById('ai-ask-btn'), questionInput = document.getElementById('ai-question-input'), responseArea = document.getElementById('ai-response-area');
+            const askAI = () => { const question = questionInput.value.trim(); if (!question) return; responseArea.innerHTML += `<p class="mt-2 text-right"><strong>Kamu:</strong> ${question}</p>`; questionInput.value = ''; const typing = document.createElement('p'); typing.innerHTML = `<strong>Kakak AI:</strong> Ngetik...`; responseArea.appendChild(typing); responseArea.scrollTop = responseArea.scrollHeight; setTimeout(() => { const answer = App.utils.getAIResponse(question); typing.remove(); responseArea.innerHTML += `<p class="mt-2"><strong>Kakak AI:</strong> ${answer}</p>`; responseArea.scrollTop = responseArea.scrollHeight; }, 1200); };
+            askBtn.addEventListener('click', askAI); questionInput.addEventListener('keypress', (e) => e.key === 'Enter' && askAI());
         };
-
+        App.render.panduan = function() {
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Buku Panduan SIPINJOL</h2><div class="space-y-6 bg-white p-6 rounded-xl shadow-md"><div><h3 class="text-xl font-bold mb-2">1. Absen & Beranda</h3><p>Masuk pakai akunmu. Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p></div><div><h3 class="text-xl font-bold mb-2">2. Pinjam Barang (Fleksibel!)</h3><p>Pilih 'Pinjam Barang' dan sekarang kamu bisa pilih mau pinjam untuk 1, 3, atau 7 hari. Sesuaikan dengan kebutuhanmu!</p></div><div><h3 class="text-xl font-bold mb-2">3. Chat Admin Langsung</h3><p>Ada masalah dengan barang atau punya pertanyaan? Langsung aja kirim pesan ke Admin lewat menu 'Chat Admin'.</p></div><div><h3 class="text-xl font-bold mb-2">4. Kelola Aset (Khusus Admin)</h3><p>Admin sekarang bisa menambah data inventaris baru lewat menu 'Kelola Aset'.</p></div></div></div>`;
+        };
+        App.utils.getAIResponse = function(question) {
+            const q = question.toLowerCase();
+            if (q.includes('sejarah') || q.includes('berdiri')) return "SMAN 1 Dramaga itu didirikan tahun 1983. Udah senior banget kan? Dulu awalnya numpang di gedung SMP, sekarang udah jadi sekolah kebanggaan kita semua!";
+            if (q.includes('visi') || q.includes('misi')) return "Visi sekolah kita itu keren: 'Terwujudnya Lulusan yang Unggul dalam Prestasi, Berkarakter, dan Berwawasan Lingkungan'. Singkatnya, jadi siswa keren yang peduli lingkungan!";
+            if (q.includes('kepala sekolah') || q.includes('kepsek')) return "Kepala Sekolah kita saat ini Bapak Bambang Supriyadi, S.Pd. Beliau asyik dan peduli banget sama kita-kita, lho.";
+            if (q.includes('ekskul') || q.includes('ekstrakurikuler')) return "Wah, banyak banget! Ada Paskibra (KOPASDRA), Pramuka, KIR, Futsal, Basket, Voli, Paduan Suara, sampe English Club. Kamu suka yang mana? Cuss, daftar di ruang OSIS!";
+            if (q.includes('jam pelajaran') || q.includes('masuk jam berapa')) return "Bel masuk bunyi jam 07:00 pagi, jangan telat ya! Pulangnya jam 15:30 buat Senin-Kamis, kalo Jumat lebih cepet, jam 14:00 udah bisa pulang.";
+            if (q.includes('perpus') || q.includes('perpustakaan')) return "Perpustakaan kita buka dari jam 07:30 pagi sampe 16:00 sore. Tempatnya adem, bukunya lengkap, pas banget buat nyari inspirasi atau ngadem hehe.";
+            if (q.includes('kantin') || q.includes('jajan')) return "Kantin ada di deket lapangan basket. Surganya jajanan sekolah! Dari batagor sampe es teh legendaris Bu Kantin ada semua. Awas kalap!";
+            if (q.includes('seragam')) return "Senin-Selasa pakai putih abu-abu. Rabu pakai seragam Pramuka. Kamis pakai batik sekolah, dan Jumat pakai baju koko atau muslimah. Jangan sampai salah kostum ya!";
+            if (q.includes('halo') || q.includes('hai')) return `Haloo, ${App.state.currentUser.name}! Ada yang bisa Kakak AI bantu? Tanya aja, santai~`;
+            return "Waduh, maaf nih, Kakak AI belum diajarin soal itu. Coba tanya tentang 'peraturan seragam' atau 'info ekskul' deh, aku jago kalau soal itu!";
+        };
     </script>
 </body>
 </html>
