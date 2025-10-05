@@ -237,6 +237,7 @@
             file_text: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             help: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-help-circle"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
             brain_circuit: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M21 12a3 3 0 1 0 .142-5.993"/><path d="M3 12a3 3 0 1 0 .142-5.993"/><path d="M12 21a3 3 0 1 0 .142-5.993"/><path d="M5.02 17.11a3 3 0 1 0 3.86-3.86"/><path d="M15.12 17.11a3 3 0 1 0 3.86-3.86"/><path d="M9.03 8.85a3 3 0 1 0-3.88 3.88"/><path d="M18.88 9.03a3 3 0 1 0-3.88 3.88"/><path d="M12 12v3m0 3v3m-3-12h3m3 0h3m-12 0H3m3 3 .75.75M12 12l.75.75M12 12l-.75.75m3-.75-.75.75m-1.5-1.5.75.75"/></svg>`,
+            settings: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>`,
             user: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-user-round rounded-full bg-gray-200 text-gray-500 p-1"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><circle cx="12" cy="12" r="10"/></svg>`,
             projector: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-projector"><path d="M5 16h14"/><path d="M19 12v-2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2"/><circle cx="9" cy="16" r="1"/><circle cx="15" cy="16" r="1"/><path d="M12 8a4 4 0 0 1 4 4h-8a4 4 0 0 1 4-4Z"/></svg>`,
             'laptop-2': `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-laptop-2"><path d="M15 14h.01"/><path d="M12 20h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><line x1="12" x2="12" y1="14" y2="20"/><line x1="8" x2="16" y1="18" y2="18"/></svg>`,
@@ -256,10 +257,10 @@
             // Data dan Konfigurasi
             data: {
                 users: [
-                    { id: 'adm01', username: '1234', password: '4321', role: 'admin', name: 'Admin TU' },
-                    { id: 'guru01', username: '1234', password: '4321', role: 'guru', name: 'Bapak Budi' },
-                    { id: 'sis01', username: '1234', password: '4321', role: 'siswa', name: 'Siti' },
-                    { id: 'sis02', username: '1234', password: '4321', role: 'siswa', name: 'Budi' }
+                    { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT' },
+                    { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB' },
+                    { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL' },
+                    { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS' }
                 ],
                 items: [
                     { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
@@ -474,6 +475,59 @@
                     }
                 },
 
+                updateProfile(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const errorEl = document.getElementById('profile-update-error');
+                    errorEl.classList.add('hidden'); // Reset error message
+
+                    const newUsername = form.editUsername.value.trim();
+                    const newPassword = form.newPassword.value;
+                    const confirmPassword = form.confirmPassword.value;
+
+                    const isUsernameTaken = App.data.users.some(
+                        user => user.username === newUsername && user.id !== App.state.currentUser.id
+                    );
+                    if (isUsernameTaken) {
+                        errorEl.textContent = 'Username ini sudah dipakai. Coba yang lain.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    if (newPassword && newPassword !== confirmPassword) {
+                        errorEl.textContent = 'Konfirmasi password tidak cocok.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+
+                    const userIndex = App.data.users.findIndex(user => user.id === App.state.currentUser.id);
+                    if (userIndex > -1) {
+                        const user = App.data.users[userIndex];
+                        user.name = form.fullName.value.trim();
+                        user.username = newUsername;
+                        user.email = form.email.value.trim();
+                        user.phone = form.phone.value.trim();
+                        user.address = form.address.value.trim();
+                        user.bio = form.bio.value.trim();
+                        user.avatar = document.getElementById('profile-preview-img').src;
+                        user.social = {
+                            twitter: form.twitter.value.trim(),
+                            instagram: form.instagram.value.trim(),
+                        };
+                        
+                        if (newPassword) {
+                            user.password = newPassword;
+                        }
+
+                        App.state.currentUser = { ...user };
+                        App.render.userProfile();
+                        
+                        App.utils.showNotification('Sukses!', 'Profil kamu berhasil diperbarui.', 'success');
+                    } else {
+                         errorEl.textContent = 'Terjadi kesalahan. Pengguna tidak ditemukan.';
+                         errorEl.classList.remove('hidden');
+                    }
+                },
+
                 addItem(e) {
                     e.preventDefault();
                     const form = e.target;
@@ -536,6 +590,7 @@
                         { id: 'laporan', text: 'Laporan TU', icon: ICONS.file_text, roles: ['admin'] },
                         { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
                         { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
+                        { id: 'pengaturan_akun', text: 'Pengaturan Akun', icon: ICONS.settings, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'panduan', text: 'Panduan Aplikasi', icon: ICONS.help, roles: ['admin', 'guru', 'siswa'] },
                     ];
@@ -709,7 +764,7 @@
         document.addEventListener('DOMContentLoaded', () => App.init());
         
         // --- Implementasi Fungsi Render yang Kompleks (di luar objek utama untuk kerapian) ---
-        App.render.userProfile = function() { App.DOM.userProfile.innerHTML = `${ICONS.user}<div><p class="font-semibold text-gray-800">${App.state.currentUser.name}</p><p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p></div>`; };
+        App.render.userProfile = function() { App.DOM.userProfile.innerHTML = `<img src="${App.state.currentUser.avatar}" alt="Avatar" class="w-9 h-9 rounded-full object-cover"><div><p class="font-semibold text-gray-800">${App.state.currentUser.name}</p><p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p></div>`; };
         App.render.pinjam = function() {
             const categories = [...new Set(App.data.items.map(item => item.category))];
             let itemsHtml = categories.map(category => {
@@ -727,12 +782,109 @@
             }).join('');
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Barang Inventaris</h2>${itemsHtml}</div>`;
         };
-        App.render.kembalikan = function() { /* same as previous version */ };
-        App.render.riwayat = function() { /* same as previous version */ };
-        App.render.kelola_aset = function() { /* same as previous version */ };
-        App.render.chat = function(activeChatUserId) { /* same as previous version */ };
-        App.render.tanya_ai = function() { /* same as previous version */ };
-        App.render.panduan = function() { /* same as previous version */ };
+        
+        App.render.pengaturan_akun = function() {
+            const user = App.state.currentUser;
+            const social = user.social || { twitter: '', instagram: '' };
+
+            App.DOM.mainContent.innerHTML = `
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Pengaturan Akun</h2>
+                <form id="edit-profile-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
+                    <div class="flex items-center space-x-6">
+                        <img id="profile-preview-img" src="${user.avatar}" alt="Foto Profil" class="w-24 h-24 rounded-full object-cover border-4 border-blue-200">
+                        <div>
+                            <label for="avatarUpload" class="cursor-pointer bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                <span>Ubah Foto</span>
+                                <input id="avatarUpload" name="avatarUpload" type="file" class="sr-only" accept="image/*">
+                            </label>
+                            <p class="text-xs text-gray-500 mt-2">Pilih gambar dari galeri Anda.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="fullName" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                            <input type="text" id="fullName" name="fullName" value="${user.name}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="editUsername" class="block text-sm font-medium text-gray-700">Username</label>
+                            <input type="text" id="editUsername" name="editUsername" value="${user.username}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="email" name="email" value="${user.email}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                            <input type="tel" id="phone" name="phone" value="${user.phone}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="address" class="block text-sm font-medium text-gray-700">Alamat</label>
+                        <textarea id="address" name="address" rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">${user.address}</textarea>
+                    </div>
+
+                    <div>
+                        <label for="bio" class="block text-sm font-medium text-gray-700">Bio Singkat</label>
+                        <input type="text" id="bio" name="bio" value="${user.bio}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Siswa kelas X, hobi...">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="twitter" class="block text-sm font-medium text-gray-700">Twitter (Username)</label>
+                            <input type="text" id="twitter" name="twitter" value="${social.twitter}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budisantoso">
+                        </div>
+                        <div>
+                            <label for="instagram" class="block text-sm font-medium text-gray-700">Instagram (Username)</label>
+                            <input type="text" id="instagram" name="instagram" value="${social.instagram}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budi_basket">
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-6">
+                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Ubah Password</h3>
+                         <p class="text-sm text-gray-500 mb-4">Isi hanya jika ingin mengubah password.</p>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="newPassword" class="block text-sm font-medium text-gray-700">Password Baru</label>
+                                <input type="password" id="newPassword" name="newPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Konfirmasi Password Baru</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p id="profile-update-error" class="text-red-500 text-sm text-center hidden"></p>
+
+                    <div class="text-right">
+                        <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition duration-300">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+            `;
+            document.getElementById('edit-profile-form').addEventListener('submit', App.logic.updateProfile);
+
+            const avatarUploadInput = document.getElementById('avatarUpload');
+            const profilePreviewImg = document.getElementById('profile-preview-img');
+
+            avatarUploadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        profilePreviewImg.src = event.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                } else if(file) {
+                    App.utils.showNotification('File Tidak Sesuai', 'Harap pilih file gambar (PNG, JPG, dll).', 'warning');
+                }
+            });
+        };
         App.render.kembalikan = function() {
             const loansToReturn = App.data.loans.filter(l => (App.state.currentUser.role === 'admin' || l.userId === App.state.currentUser.id) && !l.returnDate).sort((a,b) => a.dueDate - b.dueDate);
             let loansHtml = loansToReturn.map(loan => {
@@ -762,9 +914,6 @@
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kelola Aset Sekolah</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Daftar Aset Saat Ini</h3><div class="max-h-96 overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-3">Nama Barang</th><th class="py-3 px-3">Kategori</th><th class="py-3 px-3 text-center">Tersedia</th></tr></thead><tbody>${itemsHtml}</tbody></table></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Tambah Aset Baru</h3><form id="add-item-form" class="space-y-4"><div><label for="itemName" class="block text-sm font-medium">Nama Barang</label><input type="text" id="itemName" name="itemName" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemCategory" class="block text-sm font-medium">Kategori</label><select id="itemCategory" name="itemCategory" class="mt-1 w-full px-3 py-2 border rounded-lg" required><option>Elektronik</option><option>Olahraga</option><option>Laboratorium</option><option>Kelas</option><option>Lainnya</option></select></div><div><label for="itemTotal" class="block text-sm font-medium">Jumlah Total</label><input type="number" id="itemTotal" name="itemTotal" min="1" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemIcon" class="block text-sm font-medium">Nama Ikon (dari Lucide)</label><input type="text" id="itemIcon" name="itemIcon" placeholder="cth: archive" class="mt-1 w-full px-3 py-2 border rounded-lg"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Tambah</button></form></div></div></div>`;
             document.getElementById('add-item-form').addEventListener('submit', App.logic.addItem);
         };
-        App.render.chat = function(activeChatUserId) { /* same as previous version */ };
-        App.render.tanya_ai = function() { /* same as previous version */ };
-        App.render.panduan = function() { /* same as previous version */ };
         App.render.chat = function(activeChatUserId) {
             const currentUser = App.state.currentUser;
             if (currentUser.role === 'admin') {
