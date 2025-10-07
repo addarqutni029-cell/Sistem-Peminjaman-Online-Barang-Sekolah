@@ -228,6 +228,28 @@
         </div>
     </div>
 
+    <!-- Modal Aturan Pengguna -->
+    <div id="rules-modal" class="modal">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check mx-auto mb-4 text-blue-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                <h3 class="text-2xl font-bold mb-4">Aturan Main SIPINJOL</h3>
+            </div>
+            <div class="text-left text-gray-600 space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
+                <p>Selamat datang di SIPINJOL! Sebelum lanjut, yuk baca dulu beberapa aturan penting berikut:</p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Jaga Baik-Baik:</strong> Semua barang yang kamu pinjam adalah milik sekolah. Tolong dijaga seperti barangmu sendiri, ya!</li>
+                    <li><strong>Tepat Waktu:</strong> Kembalikan barang sesuai tanggal jatuh tempo. Keterlambatan akan dikenakan denda sesuai kebijakan TU.</li>
+                    <li><strong>Rusak? Lapor!</strong> Jika barang rusak atau hilang saat kamu pinjam, segera lapor ke admin TU melalui fitur chat. Jangan didiamkan saja.</li>
+                    <li><strong>Gunakan Sesuai Fungsi:</strong> Pakai barang pinjaman untuk kegiatan yang berhubungan dengan sekolah dan sesuai fungsinya.</li>
+                    <li><strong>Satu Akun Satu Orang:</strong> Akun ini milikmu pribadi. Jangan pinjamkan username dan password ke temanmu.</li>
+                </ul>
+                <p class="font-semibold pt-2">Dengan mengklik "Saya Mengerti", kamu setuju untuk mematuhi semua aturan di atas.</p>
+            </div>
+            <button id="rules-agree-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Saya Mengerti & Lanjutkan</button>
+        </div>
+    </div>
+
     <script>
         // === ICONS (Lucide SVG Strings) ===
         const ICONS = {
@@ -238,6 +260,7 @@
             help: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-help-circle"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
             brain_circuit: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M21 12a3 3 0 1 0 .142-5.993"/><path d="M3 12a3 3 0 1 0 .142-5.993"/><path d="M12 21a3 3 0 1 0 .142-5.993"/><path d="M5.02 17.11a3 3 0 1 0 3.86-3.86"/><path d="M15.12 17.11a3 3 0 1 0 3.86-3.86"/><path d="M9.03 8.85a3 3 0 1 0-3.88 3.88"/><path d="M18.88 9.03a3 3 0 1 0-3.88 3.88"/><path d="M12 12v3m0 3v3m-3-12h3m3 0h3m-12 0H3m3 3 .75.75M12 12l.75.75M12 12l-.75.75m3-.75-.75.75m-1.5-1.5.75.75"/></svg>`,
             settings: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>`,
+            users: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
             user: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-user-round rounded-full bg-gray-200 text-gray-500 p-1"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><circle cx="12" cy="12" r="10"/></svg>`,
             projector: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-projector"><path d="M5 16h14"/><path d="M19 12v-2a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2"/><circle cx="9" cy="16" r="1"/><circle cx="15" cy="16" r="1"/><path d="M12 8a4 4 0 0 1 4 4h-8a4 4 0 0 1 4-4Z"/></svg>`,
             'laptop-2': `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-laptop-2"><path d="M15 14h.01"/><path d="M12 20h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><line x1="12" x2="12" y1="14" y2="20"/><line x1="8" x2="16" y1="18" y2="18"/></svg>`,
@@ -312,6 +335,7 @@
                 logoutBtn: document.getElementById('logout-btn'),
                 loginError: document.getElementById('login-error'),
                 modal: document.getElementById('notification-modal'),
+                rulesModal: document.getElementById('rules-modal'),
                 modalIconContainer: document.getElementById('modal-icon-container'),
                 modalTitle: document.getElementById('modal-title'),
                 modalBody: document.getElementById('modal-body'),
@@ -349,6 +373,11 @@
                     if (e.target === this.DOM.modal) this.utils.hideModal();
                 });
                 
+                document.getElementById('rules-agree-btn').addEventListener('click', () => {
+                    this.DOM.rulesModal.classList.remove('show');
+                    this.logic.setupApp();
+                });
+
                 // Event Listeners untuk Kursor Kustom
                 window.addEventListener("mousemove", (e) => {
                     const posX = e.clientX;
@@ -393,7 +422,8 @@
                         App.state.currentUser = foundUser;
                         App.DOM.loginPage.classList.add('hidden');
                         App.DOM.appPage.classList.remove('hidden');
-                        App.logic.setupApp();
+                        // Tampilkan modal aturan dulu, baru setup aplikasi
+                        App.DOM.rulesModal.classList.add('show');
                         App.DOM.loginError.classList.add('hidden');
                     } else {
                         App.DOM.loginError.textContent = 'Username, password, atau peran salah!';
@@ -405,6 +435,17 @@
                     App.DOM.appPage.classList.add('hidden');
                     App.DOM.loginPage.classList.remove('hidden');
                     App.DOM.loginForm.reset();
+                },
+                handleUserFormSubmit(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+                    const userData = Object.fromEntries(formData.entries());
+                    if (userData.userId) {
+                        App.logic.updateUser(userData);
+                    } else {
+                        App.logic.addUser(userData);
+                    }
                 }
             },
             
@@ -542,6 +583,83 @@
                     form.reset();
                     App.render.kelola_aset();
                 },
+                
+                addUser(userData) {
+                    const isUsernameTaken = App.data.users.some(user => user.username === userData.username.trim());
+                    if (isUsernameTaken) {
+                        App.utils.showNotification('Gagal!', 'Username ini sudah dipakai. Harap gunakan username lain.', 'warning');
+                        return;
+                    }
+                    if (!userData.password || userData.password !== userData.confirmPassword) {
+                        App.utils.showNotification('Gagal!', 'Password tidak valid atau tidak cocok.', 'warning');
+                        return;
+                    }
+
+                    const newUser = {
+                        id: (userData.role.substring(0,3)) + (Math.floor(Math.random() * 90) + 10),
+                        name: userData.fullName,
+                        username: userData.username.trim(),
+                        password: userData.password,
+                        role: userData.role,
+                        email: userData.email,
+                        phone: '', address: '', bio: '', social: { twitter: '', instagram: '' },
+                        avatar: `https://placehold.co/100x100/718096/FFFFFF?text=${userData.fullName.charAt(0)}`
+                    };
+                    App.data.users.push(newUser);
+                    App.utils.hideModal();
+                    App.utils.showNotification('Sukses!', `Akun untuk ${newUser.name} berhasil dibuat.`, 'success');
+                    App.render.kelola_akun();
+                },
+
+                updateUser(userData) {
+                    const userIndex = App.data.users.findIndex(u => u.id === userData.userId);
+                    if (userIndex === -1) {
+                        App.utils.showNotification('Error!', 'User tidak ditemukan.', 'warning');
+                        return;
+                    }
+                    const isUsernameTaken = App.data.users.some(
+                        user => user.username === userData.username.trim() && user.id !== userData.userId
+                    );
+                    if (isUsernameTaken) {
+                        App.utils.showNotification('Gagal!', 'Username ini sudah dipakai oleh akun lain.', 'warning');
+                        return;
+                    }
+                    if (userData.password && (userData.password !== userData.confirmPassword)) {
+                        App.utils.showNotification('Gagal!', 'Password baru tidak cocok.', 'warning');
+                        return;
+                    }
+
+                    const user = App.data.users[userIndex];
+                    user.name = userData.fullName;
+                    user.username = userData.username.trim();
+                    user.role = userData.role;
+                    user.email = userData.email;
+                    if(userData.password) {
+                        user.password = userData.password;
+                    }
+                    
+                    App.utils.hideModal();
+                    App.utils.showNotification('Sukses!', `Data akun ${user.name} berhasil diperbarui.`, 'success');
+                    App.render.kelola_akun();
+                },
+                
+                deleteUser(userId) {
+                     const userToDelete = App.data.users.find(u => u.id === userId);
+                     if (!userToDelete) return;
+                     if (userToDelete.id === App.state.currentUser.id) {
+                         App.utils.showNotification('Aksi Ditolak!', 'Anda tidak dapat menghapus akun Anda sendiri.', 'warning');
+                         return;
+                     }
+                     App.utils.showConfirmModal(
+                        'Konfirmasi Hapus',
+                        `Apakah Anda yakin ingin menghapus akun <strong>${userToDelete.name}</strong>? Aksi ini tidak dapat dibatalkan.`,
+                        () => {
+                            App.data.users = App.data.users.filter(u => u.id !== userId);
+                            App.utils.showNotification('Berhasil!', `Akun ${userToDelete.name} telah dihapus.`, 'success');
+                            App.render.kelola_akun();
+                        }
+                     );
+                },
 
                 exportToExcel() {
                     const dataToExport = App.data.loans.map(loan => {
@@ -587,6 +705,7 @@
                         { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'riwayat', text: 'Catatan Peminjaman', icon: ICONS.history, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'kelola_aset', text: 'Kelola Aset', icon: ICONS.kelola_aset, roles: ['admin'] },
+                        { id: 'kelola_akun', text: 'Kelola Akun', icon: ICONS.users, roles: ['admin'] },
                         { id: 'laporan', text: 'Laporan TU', icon: ICONS.file_text, roles: ['admin'] },
                         { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
                         { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
@@ -675,6 +794,7 @@
                 kembalikan() { /* same as before */ },
                 riwayat() { /* same as before */ },
                 kelola_aset() { /* same as before */ },
+                kelola_akun() { /* new render function */ },
                 laporan() { 
                      const allLoans = App.data.loans;
                      const activeLoans = allLoans.filter(l => !l.returnDate);
@@ -722,6 +842,66 @@
                     App.DOM.modalFooter.innerHTML = `<button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="App.utils.hideModal()">Siap!</button>`;
                     App.DOM.modal.classList.add('show');
                 },
+                showConfirmModal(title, message, onConfirm) {
+                    const footerHtml = `
+                        <div class="flex gap-4">
+                            <button id="confirm-cancel" class="w-full bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Batal</button>
+                            <button id="confirm-action" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Ya, Lanjutkan</button>
+                        </div>`;
+                    App.utils.showModal(title, message, footerHtml, 'warning');
+                    document.getElementById('confirm-action').onclick = () => { onConfirm(); App.utils.hideModal(); };
+                    document.getElementById('confirm-cancel').onclick = () => App.utils.hideModal();
+                },
+                showUserModal(userId = null) {
+                    const isEditing = !!userId;
+                    const user = isEditing ? App.data.users.find(u => u.id === userId) : {};
+                    if(isEditing && !user) return;
+
+                    const title = isEditing ? 'Edit Akun Pengguna' : 'Tambah Akun Baru';
+                    const bodyHtml = `
+                        <form id="user-form" class="space-y-4 text-left">
+                            <input type="hidden" name="userId" value="${user.id || ''}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium">Nama Lengkap</label>
+                                    <input type="text" name="fullName" value="${user.name || ''}" class="mt-1 w-full px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium">Username</label>
+                                    <input type="text" name="username" value="${user.username || ''}" class="mt-1 w-full px-3 py-2 border rounded-lg" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">Email</label>
+                                <input type="email" name="email" value="${user.email || ''}" class="mt-1 w-full px-3 py-2 border rounded-lg" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">Peran</label>
+                                <select name="role" class="mt-1 w-full px-3 py-2 border rounded-lg">
+                                    <option value="siswa" ${user.role === 'siswa' ? 'selected' : ''}>Siswa</option>
+                                    <option value="guru" ${user.role === 'guru' ? 'selected' : ''}>Guru</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </div>
+                            <div class="border-t pt-4">
+                                <p class="text-sm text-gray-500 mb-2">${isEditing ? 'Isi untuk mengubah password. Kosongkan jika tidak ingin diubah.' : 'Buat password untuk akun baru.'}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium">Password</label>
+                                        <input type="password" name="password" class="mt-1 w-full px-3 py-2 border rounded-lg" ${!isEditing ? 'required' : ''}>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium">Konfirmasi Password</label>
+                                        <input type="password" name="confirmPassword" class="mt-1 w-full px-3 py-2 border rounded-lg" ${!isEditing ? 'required' : ''}>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    `;
+                    const footerHtml = `<button type="submit" form="user-form" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">${isEditing ? 'Simpan Perubahan' : 'Buat Akun'}</button>`;
+                    App.utils.showModal(title, bodyHtml, footerHtml);
+                    document.getElementById('user-form').addEventListener('submit', App.handlers.handleUserFormSubmit);
+                },
                 showBorrowModal(itemId) {
                     const item = App.data.items.find(i => i.id === itemId);
                     const modalBody = `
@@ -738,10 +918,10 @@
                         App.utils.hideModal();
                     };
                 },
-                showModal(title, bodyHtml, footerHtml) {
+                showModal(title, bodyHtml, footerHtml, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
                     App.DOM.modalBody.innerHTML = bodyHtml;
-                    App.DOM.modalIconContainer.innerHTML = '';
+                    App.DOM.modalIconContainer.innerHTML = type === 'success' ? ICONS.modal_success : (type === 'warning' ? ICONS.modal_warning : '');
                     App.DOM.modalFooter.innerHTML = footerHtml || `<button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="App.utils.hideModal()">Tutup</button>`;
                     App.DOM.modal.classList.add('show');
                 },
@@ -913,6 +1093,55 @@
             const itemsHtml = App.data.items.map(item => `<tr class="border-b"><td class="py-2 px-3">${item.name}</td><td class="py-2 px-3">${item.category}</td><td class="py-2 px-3 text-center">${item.available} / ${item.total}</td></tr>`).join('');
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kelola Aset Sekolah</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Daftar Aset Saat Ini</h3><div class="max-h-96 overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-3">Nama Barang</th><th class="py-3 px-3">Kategori</th><th class="py-3 px-3 text-center">Tersedia</th></tr></thead><tbody>${itemsHtml}</tbody></table></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Tambah Aset Baru</h3><form id="add-item-form" class="space-y-4"><div><label for="itemName" class="block text-sm font-medium">Nama Barang</label><input type="text" id="itemName" name="itemName" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemCategory" class="block text-sm font-medium">Kategori</label><select id="itemCategory" name="itemCategory" class="mt-1 w-full px-3 py-2 border rounded-lg" required><option>Elektronik</option><option>Olahraga</option><option>Laboratorium</option><option>Kelas</option><option>Lainnya</option></select></div><div><label for="itemTotal" class="block text-sm font-medium">Jumlah Total</label><input type="number" id="itemTotal" name="itemTotal" min="1" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemIcon" class="block text-sm font-medium">Nama Ikon (dari Lucide)</label><input type="text" id="itemIcon" name="itemIcon" placeholder="cth: archive" class="mt-1 w-full px-3 py-2 border rounded-lg"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Tambah</button></form></div></div></div>`;
             document.getElementById('add-item-form').addEventListener('submit', App.logic.addItem);
+        };
+        App.render.kelola_akun = function() {
+            const users = App.data.users;
+            const usersHtml = users.map(user => `
+                <tr class="border-b">
+                    <td class="p-3 flex items-center gap-3">
+                        <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <p class="font-bold">${user.name}</p>
+                            <p class="text-xs text-gray-500">${user.email}</p>
+                        </div>
+                    </td>
+                    <td class="p-3">${user.username}</td>
+                    <td class="p-3 capitalize">${user.role}</td>
+                    <td class="p-3">
+                        <div class="flex gap-2">
+                            <button class="text-blue-600 hover:text-blue-800" onclick="App.utils.showUserModal('${user.id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-800" onclick="App.logic.deleteUser('${user.id}')">Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            App.DOM.mainContent.innerHTML = `
+                <div>
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <h2 class="text-3xl font-bold text-gray-800">Kelola Akun Pengguna</h2>
+                        <button onclick="App.utils.showUserModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-blue-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+                            Tambah Akun
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
+                                <tr>
+                                    <th class="py-3 px-3">Nama Lengkap</th>
+                                    <th class="py-3 px-3">Username</th>
+                                    <th class="py-3 px-3">Peran</th>
+                                    <th class="py-3 px-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${usersHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         };
         App.render.chat = function(activeChatUserId) {
             const currentUser = App.state.currentUser;
