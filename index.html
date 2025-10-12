@@ -139,11 +139,61 @@
             animation: rainbowAnimation 15s ease infinite;
         }
 
+        /* --- Gaya Kustomisasi --- */
+        /* Tema Gelap */
+        .dark {
+            --bg-primary: #1e293b; /* slate-800 */
+            --bg-secondary: #334155; /* slate-700 */
+            --bg-tertiary: #475569; /* slate-600 */
+            --text-primary: #f1f5f9; /* slate-100 */
+            --text-secondary: #cbd5e1; /* slate-300 */
+            --border-color: #475569; /* slate-600 */
+        }
+        .dark body, .dark #app { background-color: var(--bg-primary); }
+        .dark .bg-white, .dark .modal-content, .dark #profile-card { background-color: var(--bg-secondary); border-color: var(--border-color); }
+        .dark .bg-slate-100 { background-color: var(--bg-primary); }
+        .dark .text-gray-800, .dark .text-gray-700, .dark h2, .dark h3 { color: var(--text-primary); }
+        .dark .text-gray-600, .dark .text-gray-500 { color: var(--text-secondary); }
+        .dark .border, .dark .border-b, .dark .border-t { border-color: var(--border-color); }
+        .dark input, .dark select, .dark textarea { background-color: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-color); }
+        .dark .sidebar-link:not(.active):not(.ai-button-animated) { background-color: var(--bg-secondary); color: var(--text-primary); }
+        .dark .sidebar-link:not(.active):not(.ai-button-animated):hover { background-color: #4b5563; }
+        .dark .bg-slate-100 { background-color: var(--bg-tertiary); }
+        .dark #ai-response-area { background-color: var(--bg-primary); }
+        
+        /* Tema Biru Sekolah */
+        .theme-blue {
+            --bg-primary: #eef2ff; /* indigo-50 */
+            --bg-secondary: #ffffff;
+        .animations-disabled *:before, .animations-disabled *:after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+
+        /* --- Gaya Notifikasi Pesan (Toast) --- */
+        @keyframes toast-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toast-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+        }
+        .toast-notification {
+            animation: toast-in 0.5s ease-out forwards;
+        }
+        .toast-notification.closing {
+            animation: toast-out 0.5s ease-in forwards;
+        }
+
     </style>
 </head>
 <body class="bg-slate-100 antialiased">
     <div id="cursor-dot"></div>
     <div id="cursor-outline"></div>
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[9999] w-80 space-y-3"></div>
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col justify-center items-center z-50 text-white">
@@ -195,6 +245,7 @@
                 <div class="p-4 border-b">
                     <h1 class="text-2xl font-bold text-blue-600">SIPINJOL</h1>
                     <p class="text-sm text-gray-500">SMAN 1 Dramaga</p>
+                    <div id="live-datetime" class="text-xs text-gray-500 mt-2 font-semibold"></div>
                 </div>
                 <nav id="sidebar-nav" class="p-4 space-y-2 flex-1 overflow-y-auto"></nav>
             </aside>
@@ -280,10 +331,10 @@
             // Data dan Konfigurasi
             data: {
                 users: [
-                    { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT' },
-                    { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB' },
-                    { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL' },
-                    { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS' }
+                    { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT', preferences: { theme: 'light', animations: true } },
+                    { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB', preferences: { theme: 'light', animations: true } },
+                    { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL', preferences: { theme: 'light', animations: true } },
+                    { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS', preferences: { theme: 'light', animations: true } }
                 ],
                 items: [
                     { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
@@ -298,13 +349,13 @@
                     { id: 'item10', name: 'Papan Catur', category: 'Kelas', total: 10, available: 9, icon: 'archive' },
                 ],
                 loans: [
-                    { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null },
-                    { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null },
-                    { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00') },
+                    { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null, returnDocumentation: null },
+                    { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null, returnDocumentation: null },
+                    { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00'), returnDocumentation: { photo: 'https://placehold.co/400x300/e2e8f0/4a5568?text=Kondisi+Baik', note: 'Kamera dikembalikan dalam kondisi baik dan lengkap. Terima kasih.' } },
                 ],
                 chats: [
-                    { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false },
-                    { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true }
+                    { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false, isNotified: false },
+                    { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true, isNotified: true }
                 ],
                 announcements: [
                     { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
@@ -319,6 +370,7 @@
             // State Aplikasi
             state: {
                 currentUser: null,
+                notificationChecker: null,
             },
             
             // Elemen DOM
@@ -420,6 +472,10 @@
                     );
                     if (foundUser) {
                         App.state.currentUser = foundUser;
+                        // Set default preferences if none exist
+                        if (!App.state.currentUser.preferences) {
+                            App.state.currentUser.preferences = { theme: 'light', animations: true };
+                        }
                         App.DOM.loginPage.classList.add('hidden');
                         App.DOM.appPage.classList.remove('hidden');
                         // Tampilkan modal aturan dulu, baru setup aplikasi
@@ -432,6 +488,7 @@
                 },
                 handleLogout() {
                     App.state.currentUser = null;
+                    clearInterval(App.state.notificationChecker); // Hentikan pengecekan notifikasi
                     App.DOM.appPage.classList.add('hidden');
                     App.DOM.loginPage.classList.remove('hidden');
                     App.DOM.loginForm.reset();
@@ -456,6 +513,12 @@
                     App.render.userProfile();
                     App.logic.navigateTo('dashboard');
                     App.logic.checkLateReturns();
+                    // Terapkan preferensi pengguna saat aplikasi dimuat
+                    App.utils.applyTheme(App.state.currentUser.preferences.theme);
+                    App.utils.applyAnimationSetting(App.state.currentUser.preferences.animations);
+                    App.utils.startClock(); // Mulai jam digital
+                    App.logic.checkNewMessages(); // Cek pesan yang belum dibaca saat login
+                    App.state.notificationChecker = setInterval(App.logic.checkNewMessages, 5000); // Cek pesan baru setiap 5 detik
                 },
 
                 navigateTo(view) {
@@ -491,7 +554,7 @@
                         const newLoan = {
                             loanId: 'L' + (App.data.loans.length + 1).toString().padStart(3, '0'),
                             userId: App.state.currentUser.id, itemId: itemId, borrowDate: new Date(),
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null
+                            dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null, returnDocumentation: null
                         };
                         App.data.loans.push(newLoan);
                         App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`, 'success');
@@ -499,12 +562,14 @@
                     }
                 },
 
-                kembalikanItem(loanId) {
+                kembalikanItem(loanId, documentation = null) {
                     const loan = App.data.loans.find(l => l.loanId === loanId);
                     if (loan) {
                         const item = App.data.items.find(i => i.id === loan.itemId);
                         const penalty = App.utils.calculatePenalty(loan);
-                        loan.returnDate = new Date(); item.available++;
+                        loan.returnDate = new Date(); 
+                        loan.returnDocumentation = documentation;
+                        item.available++;
                         let message = `Makasih ya, sudah mengembalikan <b>${item.name}</b>.`;
                         let type = 'success';
                         if (penalty > 0) {
@@ -558,9 +623,17 @@
                         if (newPassword) {
                             user.password = newPassword;
                         }
+                        
+                        // Simpan preferensi kustomisasi
+                        user.preferences.theme = form.themeSelector.value;
+                        user.preferences.animations = form.animationsToggle.checked;
 
                         App.state.currentUser = { ...user };
                         App.render.userProfile();
+                        
+                        // Terapkan tema dan setelan animasi secara langsung
+                        App.utils.applyTheme(user.preferences.theme);
+                        App.utils.applyAnimationSetting(user.preferences.animations);
                         
                         App.utils.showNotification('Sukses!', 'Profil kamu berhasil diperbarui.', 'success');
                     } else {
@@ -603,7 +676,8 @@
                         role: userData.role,
                         email: userData.email,
                         phone: '', address: '', bio: '', social: { twitter: '', instagram: '' },
-                        avatar: `https://placehold.co/100x100/718096/FFFFFF?text=${userData.fullName.charAt(0)}`
+                        avatar: `https://placehold.co/100x100/718096/FFFFFF?text=${userData.fullName.charAt(0)}`,
+                        preferences: { theme: 'light', animations: true } // Preferensi default
                     };
                     App.data.users.push(newUser);
                     App.utils.hideModal();
@@ -679,12 +753,37 @@
                     const newMessage = {
                         chatId: 'C' + (App.data.chats.length + 1).toString().padStart(3, '0'),
                         senderId: App.state.currentUser.id, receiverId: receiverId,
-                        message: messageText, timestamp: new Date(), isRead: false
+                        message: messageText, timestamp: new Date(), isRead: false, isNotified: false
                     };
                     App.data.chats.push(newMessage);
                     App.render.chat(receiverId);
                 },
                 
+                checkNewMessages() {
+                    if (!App.state.currentUser) return;
+                    const newMessages = App.data.chats.filter(
+                        msg => msg.receiverId === App.state.currentUser.id && !msg.isRead && !msg.isNotified
+                    );
+
+                    if (newMessages.length > 0) {
+                        newMessages.forEach(msg => {
+                            const sender = App.data.users.find(u => u.id === msg.senderId);
+                            // Cek apakah pengguna sedang di halaman chat dengan pengirim
+                            const isChatting = document.querySelector(`#chat-form`) && App.DOM.mainContent.innerHTML.includes(`onclick="App.render.chat('${sender.id}')"`);
+                            
+                            if (sender && !isChatting) {
+                                App.utils.showToast(
+                                    `Pesan Baru dari ${sender.name}`,
+                                    msg.message,
+                                    sender.avatar
+                                );
+                                msg.isNotified = true; // Tandai sudah dinotifikasi
+                            }
+                        });
+                        App.render.sidebar(); // Update badge di sidebar
+                    }
+                },
+
                 getMostPopularItem() {
                     if (App.data.loans.length === 0) return null;
                     const counts = App.data.loans.reduce((acc, loan) => {
@@ -852,6 +951,40 @@
                     document.getElementById('confirm-action').onclick = () => { onConfirm(); App.utils.hideModal(); };
                     document.getElementById('confirm-cancel').onclick = () => App.utils.hideModal();
                 },
+                showToast(title, message, avatar) {
+                    const toastContainer = document.getElementById('toast-container');
+                    const toastId = 'toast-' + Date.now();
+                    const toast = document.createElement('div');
+                    toast.id = toastId;
+                    toast.className = 'toast-notification w-full max-w-sm bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden';
+                    toast.innerHTML = `
+                        <div class="p-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <img class="h-10 w-10 rounded-full" src="${avatar}" alt="Avatar Pengirim">
+                                </div>
+                                <div class="ml-3 w-0 flex-1 pt-0.5">
+                                    <p class="text-sm font-medium text-gray-900">${title}</p>
+                                    <p class="mt-1 text-sm text-gray-500 truncate">${message}</p>
+                                </div>
+                                <div class="ml-4 flex-shrink-0 flex">
+                                    <button onclick="this.closest('.toast-notification').classList.add('closing'); setTimeout(() => this.closest('.toast-notification').remove(), 500);" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <span class="sr-only">Close</span>
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                    toastContainer.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        const el = document.getElementById(toastId);
+                        if (el) {
+                            el.classList.add('closing');
+                            setTimeout(() => el.remove(), 500);
+                        }
+                    }, 6000); // Hapus setelah 6 detik
+                },
                 showUserModal(userId = null) {
                     const isEditing = !!userId;
                     const user = isEditing ? App.data.users.find(u => u.id === userId) : {};
@@ -918,12 +1051,112 @@
                         App.utils.hideModal();
                     };
                 },
+                showReturnModal(loanId) {
+                    const loan = App.data.loans.find(l => l.loanId === loanId);
+                    const item = App.data.items.find(i => i.id === loan.itemId);
+                    const bodyHtml = `
+                        <form id="return-form">
+                            <p class="mb-4 text-left">Kamu akan mengembalikan: <strong>${item.name}</strong>.</p>
+                            <div class="text-left mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Unggah Foto Kondisi Barang</label>
+                                <input type="file" id="return-photo" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                                <img id="photo-preview" class="hidden mt-2 rounded-lg max-h-40 w-full object-contain">
+                            </div>
+                            <div class="text-left">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (opsional)</label>
+                                <textarea id="return-note" rows="3" class="w-full px-3 py-2 border rounded-lg" placeholder="Contoh: Barang dikembalikan dalam kondisi baik."></textarea>
+                            </div>
+                        </form>
+                    `;
+                    const footerHtml = `<button id="confirm-return-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Konfirmasi Pengembalian</button>`;
+                    App.utils.showModal(`Dokumentasi Pengembalian`, bodyHtml, footerHtml);
+
+                    document.getElementById('return-photo').addEventListener('change', (e) => {
+                        const preview = document.getElementById('photo-preview');
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                preview.src = event.target.result;
+                                preview.classList.remove('hidden');
+                            }
+                            reader.readAsDataURL(file);
+                        } else {
+                            preview.classList.add('hidden');
+                        }
+                    });
+
+                    document.getElementById('confirm-return-btn').onclick = () => {
+                        const photoInput = document.getElementById('return-photo');
+                        const note = document.getElementById('return-note').value;
+                        const file = photoInput.files[0];
+
+                        if (!file) {
+                            App.utils.showNotification('Gagal', 'Harap unggah foto kondisi barang.', 'warning');
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            const documentation = {
+                                photo: reader.result,
+                                note: note
+                            };
+                            App.logic.kembalikanItem(loanId, documentation);
+                            App.utils.hideModal();
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                },
+                 showDocumentationModal(loanId) {
+                    const loan = App.data.loans.find(l => l.loanId === loanId);
+                    if (!loan || !loan.returnDocumentation) return;
+                    
+                    const doc = loan.returnDocumentation;
+                    const item = App.data.items.find(i => i.id === loan.itemId);
+                    const user = App.data.users.find(u => u.id === loan.userId);
+
+                    const title = `Dokumentasi: ${item.name}`;
+                    const bodyHtml = `
+                        <div class="text-left space-y-4">
+                            <p><strong>Peminjam:</strong> ${user.name}</p>
+                            <p><strong>Tanggal Kembali:</strong> ${App.utils.formatDate(loan.returnDate)}</p>
+                            <div>
+                                <p class="font-semibold mb-2">Foto Kondisi Barang:</p>
+                                <img src="${doc.photo}" alt="Dokumentasi Pengembalian" class="rounded-lg w-full max-h-64 object-contain border bg-slate-100">
+                            </div>
+                            <div>
+                                <p class="font-semibold mb-2">Catatan dari Peminjam:</p>
+                                <p class="bg-slate-100 p-3 rounded-lg text-sm">${doc.note || '<em>Tidak ada catatan.</em>'}</p>
+                            </div>
+                        </div>
+                    `;
+                    App.utils.showModal(title, bodyHtml);
+                },
                 showModal(title, bodyHtml, footerHtml, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
                     App.DOM.modalBody.innerHTML = bodyHtml;
                     App.DOM.modalIconContainer.innerHTML = type === 'success' ? ICONS.modal_success : (type === 'warning' ? ICONS.modal_warning : '');
                     App.DOM.modalFooter.innerHTML = footerHtml || `<button class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" onclick="App.utils.hideModal()">Tutup</button>`;
                     App.DOM.modal.classList.add('show');
+                },
+                startClock() {
+                    const datetimeEl = document.getElementById('live-datetime');
+                    if (!datetimeEl) return;
+
+                    const updateClock = () => {
+                        const now = new Date();
+                        const optionsDate = { weekday: 'long', day: 'numeric', month: 'long' };
+                        const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                        
+                        const dateString = now.toLocaleDateString('id-ID', optionsDate);
+                        const timeString = now.toLocaleTimeString('id-ID', optionsTime).replace(/\./g, ':');
+
+                        datetimeEl.textContent = `${dateString} | ${timeString}`;
+                    };
+                    
+                    updateClock();
+                    setInterval(updateClock, 1000);
                 },
                 hideModal() { App.DOM.modal.classList.remove('show'); },
                 formatDate(date) { return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); },
@@ -936,7 +1169,18 @@
                 getGreeting() { const h = new Date().getHours(); return h<11 ? "Selamat Pagi" : h<15 ? "Selamat Siang" : h<18 ? "Selamat Sore" : "Selamat Malam"; },
                 getGreetingSubtext() { const h = new Date().getHours(); return h<11 ? "Jangan lupa sarapan dan semangat belajar ya!" : h<15 ? "Sudah masuk jam istirahat, jangan lupa jajan di kantin!" : h<18 ? "Sudah waktunya pulang, hati-hati di jalan!" : "Waktunya istirahat, jangan begadang ya!"; },
                 makeDraggable(element) { let isDragging = false, offsetX, offsetY; element.onmousedown = (e) => { isDragging = true; offsetX = e.clientX - element.getBoundingClientRect().left; offsetY = e.clientY - element.getBoundingClientRect().top; element.classList.add('dragging'); e.preventDefault(); }; document.onmousemove = (e) => { if (!isDragging) return; let newX = e.clientX - offsetX; let newY = e.clientY - offsetY; const maxX = window.innerWidth - element.offsetWidth; const maxY = window.innerHeight - element.offsetHeight; element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`; element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`; element.style.bottom = 'auto'; element.style.right = 'auto'; }; document.onmouseup = () => { isDragging = false; element.classList.remove('dragging'); }; },
-                getAIResponse(question) { /* same as before */ }
+                getAIResponse(question) { /* same as before */ },
+                applyTheme(theme) {
+                    document.body.classList.remove('dark', 'theme-blue');
+                    if (theme === 'dark') {
+                        document.body.classList.add('dark');
+                    } else if (theme === 'blue') {
+                        document.body.classList.add('theme-blue');
+                    }
+                },
+                applyAnimationSetting(enabled) {
+                    document.body.classList.toggle('animations-disabled', !enabled);
+                }
             }
         };
 
@@ -966,6 +1210,7 @@
         App.render.pengaturan_akun = function() {
             const user = App.state.currentUser;
             const social = user.social || { twitter: '', instagram: '' };
+            const preferences = user.preferences || { theme: 'light', animations: true };
 
             App.DOM.mainContent.innerHTML = `
             <div>
@@ -1021,6 +1266,27 @@
                             <input type="text" id="instagram" name="instagram" value="${social.instagram}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budi_basket">
                         </div>
                     </div>
+                    
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Kustomisasi Tampilan</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="themeSelector" class="block text-sm font-medium text-gray-700">Tema Aplikasi</label>
+                                <select id="themeSelector" name="themeSelector" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="light" ${preferences.theme === 'light' ? 'selected' : ''}>Cerah (Default)</option>
+                                    <option value="dark" ${preferences.theme === 'dark' ? 'selected' : ''}>Gelap</option>
+                                    <option value="blue" ${preferences.theme === 'blue' ? 'selected' : ''}>Biru Sekolah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Animasi</label>
+                                <div class="mt-2 flex items-center">
+                                     <input type="checkbox" id="animationsToggle" name="animationsToggle" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${preferences.animations ? 'checked' : ''}>
+                                     <label for="animationsToggle" class="ml-2 block text-sm text-gray-900">Aktifkan animasi antarmuka</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="border-t pt-6">
                          <h3 class="text-lg font-semibold text-gray-800 mb-2">Ubah Password</h3>
@@ -1071,13 +1337,41 @@
                 const item = App.data.items.find(i => i.id === loan.itemId);
                 const user = App.data.users.find(u => u.id === loan.userId);
                 const isLate = new Date() > loan.dueDate;
-                return `<tr class="border-b ${isLate ? 'bg-red-50' : ''}"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td><td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg" onclick="App.logic.kembalikanItem('${loan.loanId}')">Kembalikan</button></td></tr>`;
+                return `<tr class="border-b ${isLate ? 'bg-red-50' : ''}"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td><td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-600" onclick="App.utils.showReturnModal('${loan.loanId}')">Kembalikan</button></td></tr>`;
             }).join('') || `<tr><td colspan="4" class="text-center py-8 text-gray-500">Aman! Gak ada barang yang sedang kamu pinjam.</td></tr>`;
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kembalikan Barang</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Jatuh Tempo</th><th class="py-3 px-4">Aksi</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
         };
         App.render.riwayat = function() {
-            let userLoans = (App.state.currentUser.role === 'admin') ? [...App.data.loans] : App.data.loans.filter(l => l.userId === App.state.currentUser.id);
+            const isAdmin = App.state.currentUser.role === 'admin';
+            let userLoans = isAdmin ? [...App.data.loans] : App.data.loans.filter(l => l.userId === App.state.currentUser.id);
             userLoans.sort((a, b) => b.borrowDate - a.borrowDate);
+
+            let adminAnalysisHtml = '';
+            if (isAdmin) {
+                const activeLoans = App.data.loans.filter(l => !l.returnDate);
+                const popularItem = App.logic.getMostPopularItem();
+                
+                const userLoanCounts = App.data.loans.reduce((acc, loan) => {
+                    acc[loan.userId] = (acc[loan.userId] || 0) + 1;
+                    return acc;
+                }, {});
+                let mostActiveUser = { name: '-', loans: 0 };
+                if (Object.keys(userLoanCounts).length > 0) {
+                    const mostActiveUserId = Object.keys(userLoanCounts).reduce((a, b) => userLoanCounts[a] > userLoanCounts[b] ? a : b);
+                    mostActiveUser.name = App.data.users.find(u => u.id === mostActiveUserId).name;
+                    mostActiveUser.loans = userLoanCounts[mostActiveUserId];
+                }
+                
+                adminAnalysisHtml = `
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjaman Aktif</p><p class="text-2xl font-bold">${activeLoans.length}</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Total Transaksi</p><p class="text-2xl font-bold">${App.data.loans.length}</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Aset Terpopuler</p><p class="text-lg font-bold truncate">${popularItem ? popularItem.name : '-'}</p></div>
+                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjam Teraktif</p><p class="text-lg font-bold truncate">${mostActiveUser.name} (${mostActiveUser.loans}x)</p></div>
+                </div>
+                `;
+            }
+
             const loansHtml = userLoans.map(loan => {
                 const item = App.data.items.find(i => i.id === loan.itemId);
                 const user = App.data.users.find(u => u.id === loan.userId);
@@ -1085,9 +1379,16 @@
                 if (loan.returnDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Sudah Kembali</span>`;
                 else if (new Date() > loan.dueDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Telat</span>`;
                 else statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Dipinjam</span>`;
-                return `<tr class="border-b"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td><td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td><td class="py-3 px-4">${statusBadge}</td></tr>`;
-            }).join('') || `<tr><td colspan="5" class="text-center py-8 text-gray-500">Belum ada catatan peminjaman.</td></tr>`;
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Tgl Pinjam</th><th class="py-3 px-4">Tgl Kembali</th><th class="py-3 px-4">Status</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
+                
+                let docButton = '';
+                if(isAdmin && loan.returnDocumentation) {
+                    docButton = `<button class="text-blue-600 hover:underline text-xs" onclick="App.utils.showDocumentationModal('${loan.loanId}')">Lihat</button>`;
+                }
+                
+                return `<tr class="border-b"><td class="py-3 px-4">${item.name}</td>${isAdmin ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td><td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td><td class="py-3 px-4">${statusBadge}</td>${isAdmin ? `<td class="py-3 px-4 text-center">${docButton}</td>`: ''}</tr>`;
+            }).join('') || `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-8 text-gray-500">Belum ada catatan peminjaman.</td></tr>`;
+
+            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2>${adminAnalysisHtml}<div class="bg-white rounded-xl shadow-md overflow-hidden"><div class="max-h-[60vh] overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-4">Nama Barang</th>${isAdmin ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Tgl Pinjam</th><th class="py-3 px-4">Tgl Kembali</th><th class="py-3 px-4">Status</th>${isAdmin ? '<th class="py-3 px-4 text-center">Dokumentasi</th>': ''}</tr></thead><tbody>${loansHtml}</tbody></table></div></div></div>`;
         };
         App.render.kelola_aset = function() {
             const itemsHtml = App.data.items.map(item => `<tr class="border-b"><td class="py-2 px-3">${item.name}</td><td class="py-2 px-3">${item.category}</td><td class="py-2 px-3 text-center">${item.available} / ${item.total}</td></tr>`).join('');
