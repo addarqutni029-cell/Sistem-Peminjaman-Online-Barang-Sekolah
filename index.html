@@ -398,6 +398,7 @@
 
             // Inisialisasi
             init() {
+                this.logic.loadData(); // Muat data dari Local Storage
                 this.startSplashScreen();
                 this.setupEventListeners();
                 this.utils.makeDraggable(document.getElementById('profile-card'));
@@ -508,6 +509,27 @@
             
             // Logika Inti Aplikasi
             logic: {
+                loadData() {
+                    const savedDataJSON = localStorage.getItem('sipinjolData');
+                    if (savedDataJSON) {
+                        try {
+                            const savedData = JSON.parse(savedDataJSON);
+                            // Mengubah kembali string tanggal menjadi objek Date
+                            savedData.loans.forEach(loan => {
+                                if (loan.borrowDate) loan.borrowDate = new Date(loan.borrowDate);
+                                if (loan.dueDate) loan.dueDate = new Date(loan.dueDate);
+                                if (loan.returnDate) loan.returnDate = new Date(loan.returnDate);
+                            });
+                            savedData.chats.forEach(chat => {
+                                if (chat.timestamp) chat.timestamp = new Date(chat.timestamp);
+                            });
+                            App.data = savedData;
+                        } catch (e) {
+                            console.error("Gagal memuat data dari Local Storage:", e);
+                            // Jika data korup, jangan muat apa pun dan biarkan data default yang digunakan.
+                        }
+                    }
+                },
                 setupApp() {
                     App.render.sidebar();
                     App.render.userProfile();
@@ -557,6 +579,7 @@
                             dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null, returnDocumentation: null
                         };
                         App.data.loans.push(newLoan);
+                        App.utils.saveData(); // Simpan perubahan
                         App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`, 'success');
                         App.render.pinjam();
                     }
@@ -570,6 +593,7 @@
                         loan.returnDate = new Date(); 
                         loan.returnDocumentation = documentation;
                         item.available++;
+                        App.utils.saveData(); // Simpan perubahan
                         let message = `Makasih ya, sudah mengembalikan <b>${item.name}</b>.`;
                         let type = 'success';
                         if (penalty > 0) {
@@ -629,6 +653,7 @@
                         user.preferences.animations = form.animationsToggle.checked;
 
                         App.state.currentUser = { ...user };
+                        App.utils.saveData(); // Simpan perubahan
                         App.render.userProfile();
                         
                         // Terapkan tema dan setelan animasi secara langsung
@@ -652,6 +677,7 @@
                         icon: form.itemIcon.value || 'archive'
                     };
                     App.data.items.push(newItem);
+                    App.utils.saveData(); // Simpan perubahan
                     App.utils.showNotification('Berhasil!', `Aset baru "${newItem.name}" telah ditambahkan.`, 'success');
                     form.reset();
                     App.render.kelola_aset();
@@ -680,6 +706,7 @@
                         preferences: { theme: 'light', animations: true } // Preferensi default
                     };
                     App.data.users.push(newUser);
+                    App.utils.saveData(); // Simpan perubahan
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Akun untuk ${newUser.name} berhasil dibuat.`, 'success');
                     App.render.kelola_akun();
@@ -712,6 +739,7 @@
                         user.password = userData.password;
                     }
                     
+                    App.utils.saveData(); // Simpan perubahan
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Data akun ${user.name} berhasil diperbarui.`, 'success');
                     App.render.kelola_akun();
@@ -729,6 +757,7 @@
                         `Apakah Anda yakin ingin menghapus akun <strong>${userToDelete.name}</strong>? Aksi ini tidak dapat dibatalkan.`,
                         () => {
                             App.data.users = App.data.users.filter(u => u.id !== userId);
+                            App.utils.saveData(); // Simpan perubahan
                             App.utils.showNotification('Berhasil!', `Akun ${userToDelete.name} telah dihapus.`, 'success');
                             App.render.kelola_akun();
                         }
@@ -756,6 +785,7 @@
                         message: messageText, timestamp: new Date(), isRead: false, isNotified: false
                     };
                     App.data.chats.push(newMessage);
+                    App.utils.saveData(); // Simpan perubahan
                     App.render.chat(receiverId);
                 },
                 
@@ -934,6 +964,10 @@
             
             // Fungsi Bantuan
             utils: {
+                saveData() {
+                    // Menyimpan seluruh state data aplikasi ke Local Storage browser
+                    localStorage.setItem('sipinjolData', JSON.stringify(App.data));
+                },
                 showNotification(title, message, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
                     App.DOM.modalBody.innerHTML = message;
@@ -1452,7 +1486,7 @@
                 const contactListHtml = messageSenders.map(senderId => { const sender = App.data.users.find(u => u.id === senderId); const isActive = senderId === activeChatUserId; return `<div class="p-3 border-b cursor-pointer ${isActive ? 'bg-blue-100' : 'hover:bg-slate-50'}" onclick="App.render.chat('${senderId}')"><p class="font-semibold">${sender.name} ${unreadCounts[senderId] > 0 ? `<span class="ml-2 text-xs text-white bg-red-500 rounded-full px-2 py-1">${unreadCounts[senderId]}</span>` : ''}</p><p class="text-xs text-gray-500">${sender.role}</p></div>`; }).join('') || `<div class="p-4 text-center text-gray-500">Belum ada pesan masuk.</div>`;
                 let chatBoxHtml = `<div class="h-full flex items-center justify-center text-gray-500">Pilih percakapan untuk ditampilkan.</div>`;
                 if(activeChatUserId) {
-                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); App.render.sidebar();
+                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); App.utils.saveData(); App.render.sidebar();
                     const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === activeChatUserId) || (c.senderId === activeChatUserId && c.receiverId === currentUser.id));
                     chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik balasan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
                 }
