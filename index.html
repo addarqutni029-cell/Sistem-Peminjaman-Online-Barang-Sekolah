@@ -308,8 +308,8 @@
         // !!! PENTING !!!
         // Ganti nilai di bawah ini dengan URL dan Kunci Anon Supabase Anda yang asli.
         // Anda bisa mendapatkannya dari dashboard proyek Supabase Anda.
-        const SUPABASE_URL = "https://kyedkrprivniluyubyrw.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5ZWRrcnByaXZuaWx1eXVieXJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMjU5MzgsImV4cCI6MjA3NjYwMTkzOH0.G_JPw9MR9n78pXuMee-eOFkt449XRu5f4tsGcJS7SQU";
+        const SUPABASE_URL = 'https://zkkjuklhsmutdmdffngy.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2p1a2xoc211dGRtZGZmbmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNzAzMjQsImV4cCI6MjA3Njc0NjMyNH0.8vHgDXCwrtQ-3UjbxHZiXx4qA7uqIiAHD6kEVhTlTRk';
         
         // Inisialisasi Supabase Client. 'supabase' adalah objek global dari script Supabase
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -876,7 +876,7 @@
                     let navLinks = [
                         { id: 'dashboard', text: 'Beranda', icon: ICONS.dashboard, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'pinjam', text: 'Pinjam Barang', icon: ICONS.archive, roles: ['guru', 'siswa'] },
-                        { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['admin', 'guru', 'siswa'] },
+                        { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['guru', 'siswa'] },
                         { id: 'riwayat', text: 'Catatan Peminjaman', icon: ICONS.history, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'kelola_aset', text: 'Kelola Aset', icon: ICONS.kelola_aset, roles: ['admin'] },
                         { id: 'kelola_akun', text: 'Kelola Akun', icon: ICONS.users, roles: ['admin'] },
@@ -884,7 +884,7 @@
                         { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
                         { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
                         { id: 'pengaturan_akun', text: 'Pengaturan Akun', icon: ICONS.settings, roles: ['admin', 'guru', 'siswa'] },
-                        { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] },
+                        /* { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] }, */ // <-- Dihapus
                         { id: 'panduan', text: 'Panduan Aplikasi', icon: ICONS.help, roles: ['admin', 'guru', 'siswa'] },
                     ];
                     const unreadMessages = App.data.chats.filter(c => c.receiverId === App.state.currentUser.id && !c.isRead).length;
@@ -910,19 +910,13 @@
                             let extraClasses = '';
                             
                             if (currentUserRole === 'admin') {
-                                if (link.id === 'tanya_ai') {
-                                    extraClasses = 'ai-button-animated text-white font-bold';
-                                } else {
-                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
-                                    colorCounter++;
-                                }
+                                /* Logika styling 'tanya_ai' dihapus */
+                                extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                colorCounter++;
                             } else { // Untuk 'guru' dan 'siswa'
-                                if (link.id === 'tanya_ai') {
-                                    extraClasses = 'ai-button-animated text-white font-bold';
-                                } else {
-                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
-                                    colorCounter++;
-                                }
+                                /* Logika styling 'tanya_ai' dihapus */
+                                extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                colorCounter++;
                             }
 
                             return `<a href="#" class="sidebar-link ${extraClasses}" data-view="${link.id}"><span class="mr-3">${link.icon}</span><span>${link.text}</span>${isChatAdmin ? `<span class="notification-badge">${unreadMessages}</span>` : ''}</a>`
@@ -1543,37 +1537,38 @@
                     document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(activeChatUserId, document.getElementById('chat-input').value); });
                     document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
                 }
-            } else { 
-                const adminId = 'adm01';
-                const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === adminId) || (c.senderId === adminId && c.receiverId === currentUser.id));
-                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat dengan Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 70vh;"><div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div></div></div>`;
-                document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(adminId, document.getElementById('chat-input').value); });
-                document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
+            } else {
+                // LOGIKA UNTUK GURU DAN SISWA (YANG HILANG)
+                const admin = App.data.users.find(u => u.role === 'admin');
+                if (!admin) {
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><p class="text-gray-600">Fitur chat sedang tidak tersedia. Tidak ada admin yang terdeteksi.</p></div>`;
+                    return;
+                }
+                
+                // Tandai pesan dari admin sebagai sudah dibaca
+                App.data.chats.forEach(c => { if(c.senderId === admin.id && c.receiverId === currentUser.id) c.isRead = true; }); 
+                App.render.sidebar(); // Update badge
+
+                const messages = App.data.chats.filter(c => 
+                    (c.senderId === currentUser.id && c.receiverId === admin.id) || 
+                    (c.senderId === admin.id && c.receiverId === currentUser.id)
+                ).sort((a,b) => a.timestamp - b.timestamp); // Urutkan pesan
+                
+                let chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan untuk admin..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
+
+                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 60vh;">${chatBoxHtml}</div></div>`;
+                
+                if (document.getElementById('chat-form')) {
+                    document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(admin.id, document.getElementById('chat-input').value); });
+                    const messageList = document.getElementById('message-list');
+                    if(messageList) messageList.scrollTop = messageList.scrollHeight;
+                }
             }
-        };
-        App.render.tanya_ai = function() {
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-2">Tanya Kakak AI</h2><p class="text-gray-600 mb-6">Asisten virtual sekolah yang siap bantu kamu.</p><div class="bg-white rounded-xl shadow-md p-6"><div id="ai-response-area" class="h-96 bg-slate-100 rounded-lg p-4 mb-4 overflow-y-auto text-gray-700 leading-relaxed"><p><strong>Kakak AI:</strong> Halo! Aku asisten AI SMAN 1 Dramaga. Ada yang bisa dibantu? Tanya aja soal ekskul, sejarah sekolah, atau lokasi kantin!</p></div><div class="flex space-x-2"><input type="text" id="ai-question-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pertanyaanmu..."><button id="ai-ask-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></div></div></div>`;
-            const askBtn = document.getElementById('ai-ask-btn'), questionInput = document.getElementById('ai-question-input'), responseArea = document.getElementById('ai-response-area');
-            const askAI = () => { const question = questionInput.value.trim(); if (!question) return; responseArea.innerHTML += `<p class="mt-2 text-right"><strong>Kamu:</strong> ${question}</p>`; questionInput.value = ''; const typing = document.createElement('p'); typing.innerHTML = `<strong>Kakak AI:</strong> Ngetik...`; responseArea.appendChild(typing); responseArea.scrollTop = responseArea.scrollHeight; setTimeout(() => { const answer = App.utils.getAIResponse(question); typing.remove(); responseArea.innerHTML += `<p class="mt-2"><strong>Kakak AI:</strong> ${answer}</p>`; responseArea.scrollTop = responseArea.scrollHeight; }, 1200); };
-            askBtn.addEventListener('click', askAI); questionInput.addEventListener('keypress', (e) => e.key === 'Enter' && askAI());
         };
         App.render.panduan = function() {
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Buku Panduan SIPINJOL</h2><div class="space-y-6 bg-white p-6 rounded-xl shadow-md"><div><h3 class="text-xl font-bold mb-2">1. Absen & Beranda</h3><p>Masuk pakai akunmu. Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p></div><div><h3 class="text-xl font-bold mb-2">2. Pinjam Barang (Fleksibel!)</h3><p>Pilih 'Pinjam Barang' dan sekarang kamu bisa pilih mau pinjam untuk 1, 3, atau 7 hari. Sesuaikan dengan kebutuhanmu!</p></div><div><h3 class="text-xl font-bold mb-2">3. Chat Admin Langsung</h3><p>Ada masalah dengan barang atau punya pertanyaan? Langsung aja kirim pesan ke Admin lewat menu 'Chat Admin'.</p></div><div><h3 class="text-xl font-bold mb-2">4. Kelola Aset (Khusus Admin)</h3><p>Admin sekarang bisa menambah data inventaris baru lewat menu 'Kelola Aset'.</p></div></div></div>`;
-        };
-        App.utils.getAIResponse = function(question) {
-            const q = question.toLowerCase();
-            if (q.includes('sejarah') || q.includes('berdiri')) return "SMAN 1 Dramaga itu didirikan tahun 1983. Udah senior banget kan? Dulu awalnya numpang di gedung SMP, sekarang udah jadi sekolah kebanggaan kita semua!";
-            if (q.includes('visi') || q.includes('misi')) return "Visi sekolah kita itu keren: 'Terwujudnya Lulusan yang Unggul dalam Prestasi, Berkarakter, dan Berwawasan Lingkungan'. Singkatnya, jadi siswa keren yang peduli lingkungan!";
-            if (q.includes('kepala sekolah') || q.includes('kepsek')) return "Kepala Sekolah kita saat ini Bapak Bambang Supriyadi, S.Pd. Beliau asyik dan peduli banget sama kita-kita, lho.";
-            if (q.includes('ekskul') || q.includes('ekstrakurikuler')) return "Wah, banyak banget! Ada Paskibra (KOPASDRA), Pramuka, KIR, Futsal, Basket, Voli, Paduan Suara, sampe English Club. Kamu suka yang mana? Cuss, daftar di ruang OSIS!";
-            if (q.includes('jam pelajaran') || q.includes('masuk jam berapa')) return "Bel masuk bunyi jam 07:00 pagi, jangan telat ya! Pulangnya jam 15:30 buat Senin-Kamis, kalo Jumat lebih cepet, jam 14:00 udah bisa pulang.";
-            if (q.includes('perpus') || q.includes('perpustakaan')) return "Perpustakaan kita buka dari jam 07:30 pagi sampe 16:00 sore. Tempatnya adem, bukunya lengkap, pas banget buat nyari inspirasi atau ngadem hehe.";
-            if (q.includes('kantin') || q.includes('jajan')) return "Kantin ada di deket lapangan basket. Surganya jajanan sekolah! Dari batagor sampe es teh legendaris Bu Kantin ada semua. Awas kalap!";
-            if (q.includes('seragam')) return "Senin-Selasa pakai putih abu-abu. Rabu pakai seragam Pramuka. Kamis pakai batik sekolah, dan Jumat pakai baju koko atau muslimah. Jangan sampai salah kostum ya!";
-            if (q.includes('halo') || q.includes('hai')) return `Haloo, ${App.state.currentUser.name}! Ada yang bisa Kakak AI bantu? Tanya aja, santai~`;
-            return "Waduh, maaf nih, Kakak AI belum diajarin soal itu. Coba tanya tentang 'peraturan seragam' atau 'info ekskul' deh, aku jago kalau soal itu!";
-        };
+            };
+            
     </script>
 </body>
 </html>
-
