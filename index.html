@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
     <!-- Library untuk Ekspor Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Tambahkan Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body, html {
             font-family: 'Poppins', sans-serif;
@@ -165,6 +167,7 @@
         .theme-blue {
             --bg-primary: #eef2ff; /* indigo-50 */
             --bg-secondary: #ffffff;
+        }
         .animations-disabled *:before, .animations-disabled *:after {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
@@ -187,7 +190,6 @@
         .toast-notification.closing {
             animation: toast-out 0.5s ease-in forwards;
         }
-
     </style>
 </head>
 <body class="bg-slate-100 antialiased">
@@ -302,6 +304,17 @@
     </div>
 
     <script>
+        // === KONFIGURASI SUPABASE ===
+        // !!! PENTING !!!
+        // Ganti nilai di bawah ini dengan URL dan Kunci Anon Supabase Anda yang asli.
+        // Anda bisa mendapatkannya dari dashboard proyek Supabase Anda.
+        const SUPABASE_URL = 'https://zkkjuklhsmutdmdffngy.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2p1a2xoc211dGRtZGZmbmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNzAzMjQsImV4cCI6MjA3Njc0NjMyNH0.8vHgDXCwrtQ-3UjbxHZiXx4qA7uqIiAHD6kEVhTlTRk';
+        
+        // Inisialisasi Supabase Client. 'supabase' adalah objek global dari script Supabase
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
         // === ICONS (Lucide SVG Strings) ===
         const ICONS = {
             dashboard: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`,
@@ -330,38 +343,100 @@
         const App = {
             // Data dan Konfigurasi
             data: {
-                users: [
-                    { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT', preferences: { theme: 'light', animations: true } },
-                    { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB', preferences: { theme: 'light', animations: true } },
-                    { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL', preferences: { theme: 'light', animations: true } },
-                    { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS', preferences: { theme: 'light', animations: true } }
-                ],
-                items: [
-                    { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
-                    { id: 'item02', name: 'Laptop Chromebook', category: 'Elektronik', total: 20, available: 15, icon: 'laptop-2' },
-                    { id: 'item03', name: 'Kamera DSLR Canon', category: 'Elektronik', total: 3, available: 1, icon: 'camera' },
-                    { id: 'item04', name: 'Speaker Aktif Aula', category: 'Elektronik', total: 4, available: 4, icon: 'speaker' },
-                    { id: 'item05', name: 'Bola Basket', category: 'Olahraga', total: 10, available: 8, icon: 'basketball' },
-                    { id: 'item06', name: 'Bola Futsal', category: 'Olahraga', total: 10, available: 10, icon: 'basketball' },
-                    { id: 'item07', name: 'Raket Badminton', category: 'Olahraga', total: 8, available: 6, icon: 'archive' },
-                    { id: 'item08', name: 'Mikroskop Binokuler', category: 'Laboratorium', total: 15, available: 15, icon: 'microscope' },
-                    { id: 'item09', name: 'Globe Peta Dunia', category: 'Kelas', total: 5, available: 5, icon: 'archive' },
-                    { id: 'item10', name: 'Papan Catur', category: 'Kelas', total: 10, available: 9, icon: 'archive' },
-                ],
-                loans: [
-                    { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null, returnDocumentation: null },
-                    { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null, returnDocumentation: null },
-                    { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00'), returnDocumentation: { photo: 'https://placehold.co/400x300/e2e8f0/4a5568?text=Kondisi+Baik', note: 'Kamera dikembalikan dalam kondisi baik dan lengkap. Terima kasih.' } },
-                ],
-                chats: [
-                    { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false, isNotified: false },
-                    { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true, isNotified: true }
-                ],
-                announcements: [
-                    { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
-                    { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
-                    { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
-                ]
+                // Data ini sekarang akan diisi dari Supabase
+                users: [],
+                items: [],
+                loans: [],
+                chats: [],
+                announcements: [],
+
+                // Fungsi untuk memuat data dari Supabase
+                loadData: async function() {
+                  try {
+                    // Cek apakah URL dan Kunci Supabase masih placeholder
+                    if (SUPABASE_URL.includes("YOUR_PROJECT_URL") || SUPABASE_ANON_KEY.includes("YOUR_ANON_PUBLIC_KEY")) {
+                        throw new Error("Konfigurasi Supabase belum diisi. Harap ganti placeholder URL dan Kunci Anon.");
+                    }
+                  
+                    const { data: users, error: userError } = await supabaseClient.from('users').select('*');
+                    if(userError) throw userError;
+
+                    const { data: items, error: itemError } = await supabaseClient.from('items').select('*');
+                    if(itemError) throw itemError;
+                    
+                    const { data: loans, error: loanError } = await supabaseClient.from('loans').select('*');
+                    if(loanError) throw loanError;
+
+                    const { data: chats, error: chatError } = await supabaseClient.from('chats').select('*');
+                    if(chatError) throw chatError;
+                    
+                    // Isi data aplikasi dari hasil fetch
+                    this.users = users || [];
+                    this.items = items || [];
+                    // Konversi string tanggal dari Supabase menjadi objek Date
+                    this.loans = (loans || []).map(loan => ({
+                        ...loan,
+                        borrowDate: new Date(loan.borrowDate),
+                        dueDate: new Date(loan.dueDate),
+                        returnDate: loan.returnDate ? new Date(loan.returnDate) : null
+                    }));
+                    this.chats = (chats || []).map(chat => ({ ...chat, timestamp: new Date(chat.timestamp) }));
+                    
+                    // Ganti: Memuat pengumuman dari data lokal karena tabel 'announcements' mungkin tidak ada
+                    this.announcements = [
+                        { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
+                        { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
+                        { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
+                    ];
+
+                    console.log('Data dari Supabase berhasil dimuat (pengumuman dari lokal):', this);
+                  } catch (e) {
+                    console.error('Gagal memuat data dari Supabase:', e);
+                    // Fallback ke data dummy jika gagal
+                    App.utils.showNotification(
+                        'Koneksi Gagal', 
+                        `Gagal terhubung ke database atau tabel tidak ditemukan (pastikan tabel 'users', 'items', 'loans', 'chats' ada). Aplikasi akan menggunakan data contoh.`, 
+                        'warning'
+                    );
+                    this.loadDummyData();
+                  }
+                },
+                
+                // Data dummy jika koneksi ke Supabase gagal
+                loadDummyData: function() {
+                    this.users = [
+                        { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT', preferences: { theme: 'light', animations: true } },
+                        { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB', preferences: { theme: 'light', animations: true } },
+                        { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL', preferences: { theme: 'light', animations: true } },
+                        { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS', preferences: { theme: 'light', animations: true } }
+                    ];
+                    this.items = [
+                        { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
+                        { id: 'item02', name: 'Laptop Chromebook', category: 'Elektronik', total: 20, available: 15, icon: 'laptop-2' },
+                        { id: 'item03', name: 'Kamera DSLR Canon', category: 'Elektronik', total: 3, available: 1, icon: 'camera' },
+                        { id: 'item04', name: 'Speaker Aktif Aula', category: 'Elektronik', total: 4, available: 4, icon: 'speaker' },
+                        { id: 'item05', name: 'Bola Basket', category: 'Olahraga', total: 10, available: 8, icon: 'basketball' },
+                        { id: 'item06', name: 'Bola Futsal', category: 'Olahraga', total: 10, available: 10, icon: 'basketball' },
+                        { id: 'item07', name: 'Raket Badminton', category: 'Olahraga', total: 8, available: 6, icon: 'archive' },
+                        { id: 'item08', name: 'Mikroskop Binokuler', category: 'Laboratorium', total: 15, available: 15, icon: 'microscope' },
+                        { id: 'item09', name: 'Globe Peta Dunia', category: 'Kelas', total: 5, available: 5, icon: 'archive' },
+                        { id: 'item10', name: 'Papan Catur', category: 'Kelas', total: 10, available: 9, icon: 'archive' },
+                    ];
+                    this.loans = [
+                        { loanId: 'L001', userId: 'sis01', itemId: 'item01', borrowDate: new Date('2025-09-10T09:00:00'), dueDate: new Date('2025-09-12T17:00:00'), returnDate: null, returnDocumentation: null },
+                        { loanId: 'L002', userId: 'guru01', itemId: 'item02', borrowDate: new Date('2025-09-15T10:00:00'), dueDate: new Date('2025-09-16T17:00:00'), returnDate: null, returnDocumentation: null },
+                        { loanId: 'L003', userId: 'sis01', itemId: 'item03', borrowDate: new Date('2025-09-01T11:00:00'), dueDate: new Date('2025-09-03T17:00:00'), returnDate: new Date('2025-09-03T16:00:00'), returnDocumentation: { photo: 'https://placehold.co/400x300/e2e8f0/4a5568?text=Kondisi+Baik', note: 'Kamera dikembalikan dalam kondisi baik dan lengkap. Terima kasih.' } },
+                    ];
+                    this.chats = [
+                        { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false, isNotified: false },
+                        { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true, isNotified: true }
+                    ];
+                    this.announcements = [
+                        { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
+                        { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
+                        { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
+                    ]
+                }
             },
             config: {
                 penalty: 10000 // Denda flat
@@ -801,7 +876,7 @@
                     let navLinks = [
                         { id: 'dashboard', text: 'Beranda', icon: ICONS.dashboard, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'pinjam', text: 'Pinjam Barang', icon: ICONS.archive, roles: ['guru', 'siswa'] },
-                        { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['admin', 'guru', 'siswa'] },
+                        { id: 'kembalikan', text: 'Kembalikan Barang', icon: ICONS.kembalikan, roles: ['guru', 'siswa'] },
                         { id: 'riwayat', text: 'Catatan Peminjaman', icon: ICONS.history, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'kelola_aset', text: 'Kelola Aset', icon: ICONS.kelola_aset, roles: ['admin'] },
                         { id: 'kelola_akun', text: 'Kelola Akun', icon: ICONS.users, roles: ['admin'] },
@@ -809,7 +884,7 @@
                         { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
                         { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
                         { id: 'pengaturan_akun', text: 'Pengaturan Akun', icon: ICONS.settings, roles: ['admin', 'guru', 'siswa'] },
-                        { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] },
+                        /* { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] }, */ // <-- Dihapus
                         { id: 'panduan', text: 'Panduan Aplikasi', icon: ICONS.help, roles: ['admin', 'guru', 'siswa'] },
                     ];
                     const unreadMessages = App.data.chats.filter(c => c.receiverId === App.state.currentUser.id && !c.isRead).length;
@@ -835,19 +910,13 @@
                             let extraClasses = '';
                             
                             if (currentUserRole === 'admin') {
-                                if (link.id === 'tanya_ai') {
-                                    extraClasses = 'ai-button-animated text-white font-bold';
-                                } else {
-                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
-                                    colorCounter++;
-                                }
+                                /* Logika styling 'tanya_ai' dihapus */
+                                extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                colorCounter++;
                             } else { // Untuk 'guru' dan 'siswa'
-                                if (link.id === 'tanya_ai') {
-                                    extraClasses = 'ai-button-animated text-white font-bold';
-                                } else {
-                                    extraClasses = sequentialColors[colorCounter % sequentialColors.length];
-                                    colorCounter++;
-                                }
+                                /* Logika styling 'tanya_ai' dihapus */
+                                extraClasses = sequentialColors[colorCounter % sequentialColors.length];
+                                colorCounter++;
                             }
 
                             return `<a href="#" class="sidebar-link ${extraClasses}" data-view="${link.id}"><span class="mr-3">${link.icon}</span><span>${link.text}</span>${isChatAdmin ? `<span class="notification-badge">${unreadMessages}</span>` : ''}</a>`
@@ -860,6 +929,10 @@
 
                 userProfile() { /* same as before */ },
                 dashboard() {
+                    if (App.data.announcements.length === 0) {
+                        App.DOM.mainContent.innerHTML = `<div class="text-center text-white"><p>Memuat data...</p></div>`;
+                        return;
+                    }
                     const announcement = App.data.announcements[Math.floor(Math.random() * App.data.announcements.length)];
                     const popularItem = App.logic.getMostPopularItem();
                     App.DOM.mainContent.innerHTML = `
@@ -1185,7 +1258,10 @@
         };
 
         // Inisialisasi Aplikasi ketika DOM siap
-        document.addEventListener('DOMContentLoaded', () => App.init());
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.data.loadData();
+            App.init()
+        });
         
         // --- Implementasi Fungsi Render yang Kompleks (di luar objek utama untuk kerapian) ---
         App.render.userProfile = function() { App.DOM.userProfile.innerHTML = `<img src="${App.state.currentUser.avatar}" alt="Avatar" class="w-9 h-9 rounded-full object-cover"><div><p class="font-semibold text-gray-800">${App.state.currentUser.name}</p><p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p></div>`; };
@@ -1461,36 +1537,38 @@
                     document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(activeChatUserId, document.getElementById('chat-input').value); });
                     document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
                 }
-            } else { 
-                const adminId = 'adm01';
-                const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === adminId) || (c.senderId === adminId && c.receiverId === currentUser.id));
-                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat dengan Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 70vh;"><div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div></div></div>`;
-                document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(adminId, document.getElementById('chat-input').value); });
-                document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
+            } else {
+                // LOGIKA UNTUK GURU DAN SISWA (YANG HILANG)
+                const admin = App.data.users.find(u => u.role === 'admin');
+                if (!admin) {
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><p class="text-gray-600">Fitur chat sedang tidak tersedia. Tidak ada admin yang terdeteksi.</p></div>`;
+                    return;
+                }
+                
+                // Tandai pesan dari admin sebagai sudah dibaca
+                App.data.chats.forEach(c => { if(c.senderId === admin.id && c.receiverId === currentUser.id) c.isRead = true; }); 
+                App.render.sidebar(); // Update badge
+
+                const messages = App.data.chats.filter(c => 
+                    (c.senderId === currentUser.id && c.receiverId === admin.id) || 
+                    (c.senderId === admin.id && c.receiverId === currentUser.id)
+                ).sort((a,b) => a.timestamp - b.timestamp); // Urutkan pesan
+                
+                let chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan untuk admin..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
+
+                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 60vh;">${chatBoxHtml}</div></div>`;
+                
+                if (document.getElementById('chat-form')) {
+                    document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(admin.id, document.getElementById('chat-input').value); });
+                    const messageList = document.getElementById('message-list');
+                    if(messageList) messageList.scrollTop = messageList.scrollHeight;
+                }
             }
-        };
-        App.render.tanya_ai = function() {
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-2">Tanya Kakak AI</h2><p class="text-gray-600 mb-6">Asisten virtual sekolah yang siap bantu kamu.</p><div class="bg-white rounded-xl shadow-md p-6"><div id="ai-response-area" class="h-96 bg-slate-100 rounded-lg p-4 mb-4 overflow-y-auto text-gray-700 leading-relaxed"><p><strong>Kakak AI:</strong> Halo! Aku asisten AI SMAN 1 Dramaga. Ada yang bisa dibantu? Tanya aja soal ekskul, sejarah sekolah, atau lokasi kantin!</p></div><div class="flex space-x-2"><input type="text" id="ai-question-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pertanyaanmu..."><button id="ai-ask-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></div></div></div>`;
-            const askBtn = document.getElementById('ai-ask-btn'), questionInput = document.getElementById('ai-question-input'), responseArea = document.getElementById('ai-response-area');
-            const askAI = () => { const question = questionInput.value.trim(); if (!question) return; responseArea.innerHTML += `<p class="mt-2 text-right"><strong>Kamu:</strong> ${question}</p>`; questionInput.value = ''; const typing = document.createElement('p'); typing.innerHTML = `<strong>Kakak AI:</strong> Ngetik...`; responseArea.appendChild(typing); responseArea.scrollTop = responseArea.scrollHeight; setTimeout(() => { const answer = App.utils.getAIResponse(question); typing.remove(); responseArea.innerHTML += `<p class="mt-2"><strong>Kakak AI:</strong> ${answer}</p>`; responseArea.scrollTop = responseArea.scrollHeight; }, 1200); };
-            askBtn.addEventListener('click', askAI); questionInput.addEventListener('keypress', (e) => e.key === 'Enter' && askAI());
         };
         App.render.panduan = function() {
             App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Buku Panduan SIPINJOL</h2><div class="space-y-6 bg-white p-6 rounded-xl shadow-md"><div><h3 class="text-xl font-bold mb-2">1. Absen & Beranda</h3><p>Masuk pakai akunmu. Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p></div><div><h3 class="text-xl font-bold mb-2">2. Pinjam Barang (Fleksibel!)</h3><p>Pilih 'Pinjam Barang' dan sekarang kamu bisa pilih mau pinjam untuk 1, 3, atau 7 hari. Sesuaikan dengan kebutuhanmu!</p></div><div><h3 class="text-xl font-bold mb-2">3. Chat Admin Langsung</h3><p>Ada masalah dengan barang atau punya pertanyaan? Langsung aja kirim pesan ke Admin lewat menu 'Chat Admin'.</p></div><div><h3 class="text-xl font-bold mb-2">4. Kelola Aset (Khusus Admin)</h3><p>Admin sekarang bisa menambah data inventaris baru lewat menu 'Kelola Aset'.</p></div></div></div>`;
-        };
-        App.utils.getAIResponse = function(question) {
-            const q = question.toLowerCase();
-            if (q.includes('sejarah') || q.includes('berdiri')) return "SMAN 1 Dramaga itu didirikan tahun 1983. Udah senior banget kan? Dulu awalnya numpang di gedung SMP, sekarang udah jadi sekolah kebanggaan kita semua!";
-            if (q.includes('visi') || q.includes('misi')) return "Visi sekolah kita itu keren: 'Terwujudnya Lulusan yang Unggul dalam Prestasi, Berkarakter, dan Berwawasan Lingkungan'. Singkatnya, jadi siswa keren yang peduli lingkungan!";
-            if (q.includes('kepala sekolah') || q.includes('kepsek')) return "Kepala Sekolah kita saat ini Bapak Bambang Supriyadi, S.Pd. Beliau asyik dan peduli banget sama kita-kita, lho.";
-            if (q.includes('ekskul') || q.includes('ekstrakurikuler')) return "Wah, banyak banget! Ada Paskibra (KOPASDRA), Pramuka, KIR, Futsal, Basket, Voli, Paduan Suara, sampe English Club. Kamu suka yang mana? Cuss, daftar di ruang OSIS!";
-            if (q.includes('jam pelajaran') || q.includes('masuk jam berapa')) return "Bel masuk bunyi jam 07:00 pagi, jangan telat ya! Pulangnya jam 15:30 buat Senin-Kamis, kalo Jumat lebih cepet, jam 14:00 udah bisa pulang.";
-            if (q.includes('perpus') || q.includes('perpustakaan')) return "Perpustakaan kita buka dari jam 07:30 pagi sampe 16:00 sore. Tempatnya adem, bukunya lengkap, pas banget buat nyari inspirasi atau ngadem hehe.";
-            if (q.includes('kantin') || q.includes('jajan')) return "Kantin ada di deket lapangan basket. Surganya jajanan sekolah! Dari batagor sampe es teh legendaris Bu Kantin ada semua. Awas kalap!";
-            if (q.includes('seragam')) return "Senin-Selasa pakai putih abu-abu. Rabu pakai seragam Pramuka. Kamis pakai batik sekolah, dan Jumat pakai baju koko atau muslimah. Jangan sampai salah kostum ya!";
-            if (q.includes('halo') || q.includes('hai')) return `Haloo, ${App.state.currentUser.name}! Ada yang bisa Kakak AI bantu? Tanya aja, santai~`;
-            return "Waduh, maaf nih, Kakak AI belum diajarin soal itu. Coba tanya tentang 'peraturan seragam' atau 'info ekskul' deh, aku jago kalau soal itu!";
-        };
+            };
+            
     </script>
 </body>
 </html>
