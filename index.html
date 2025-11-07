@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UATF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIPINJOL - Sistem Peminjaman Online Sekolah</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +11,7 @@
     <!-- Library untuk Ekspor Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Tambahkan Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> --> <!-- Supabase dihapus -->
     <style>
         body, html {
             font-family: 'Poppins', sans-serif;
@@ -304,15 +304,11 @@
     </div>
 
     <script>
-        // === KONFIGURASI SUPABASE ===
-        // !!! PENTING !!!
-        // Ganti nilai di bawah ini dengan URL dan Kunci Anon Supabase Anda yang asli.
-        // Anda bisa mendapatkannya dari dashboard proyek Supabase Anda.
-        const SUPABASE_URL = 'https://zkkjuklhsmutdmdffngy.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2p1a2xoc211dGRtZGZmbmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNzAzMjQsImV4cCI6MjA3Njc0NjMyNH0.8vHgDXCwrtQ-3UjbxHZiXx4qA7uqIiAHD6kEVhTlTRk';
-        
-        // Inisialisasi Supabase Client. 'supabase' adalah objek global dari script Supabase
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // === KONFIGURASI SUPABASE DIHAPUS ===
+        // Aplikasi ini sekarang akan menggunakan localStorage
+        // const SUPABASE_URL = '...'; 
+        // const SUPABASE_ANON_KEY = '...';
+        // const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
         // === ICONS (Lucide SVG Strings) ===
@@ -350,55 +346,67 @@
                 chats: [],
                 announcements: [],
 
+                // Fungsi baru untuk menyimpan data ke localStorage
+                saveDataToLocal: function() {
+                    try {
+                        const dataToSave = {
+                            users: this.users,
+                            items: this.items,
+                            loans: this.loans,
+                            chats: this.chats
+                            // Pengumuman tidak perlu disimpan, bisa dimuat dari dummy
+                        };
+                        localStorage.setItem('sipinjol_data', JSON.stringify(dataToSave));
+                        console.log('Data disimpan ke localStorage.');
+                    } catch (e) {
+                        console.error('Gagal menyimpan data ke localStorage:', e);
+                    }
+                },
+
                 // Fungsi untuk memuat data dari Supabase
                 loadData: async function() {
                   try {
-                    // Cek apakah URL dan Kunci Supabase masih placeholder
-                    if (SUPABASE_URL.includes("YOUR_PROJECT_URL") || SUPABASE_ANON_KEY.includes("YOUR_ANON_PUBLIC_KEY")) {
-                        throw new Error("Konfigurasi Supabase belum diisi. Harap ganti placeholder URL dan Kunci Anon.");
+                    const localDataString = localStorage.getItem('sipinjol_data');
+                    if (localDataString) {
+                        console.log('Memuat data dari localStorage...');
+                        const localData = JSON.parse(localDataString);
+                        
+                        this.users = localData.users || [];
+                        this.items = localData.items || [];
+                        // Konversi string tanggal kembali menjadi objek Date
+                        this.loans = (localData.loans || []).map(loan => ({
+                            ...loan,
+                            borrowDate: new Date(loan.borrowDate),
+                            dueDate: new Date(loan.dueDate),
+                            returnDate: loan.returnDate ? new Date(loan.returnDate) : null
+                        }));
+                        this.chats = (localData.chats || []).map(chat => ({ 
+                            ...chat, 
+                            timestamp: new Date(chat.timestamp) 
+                        }));
+                    } else {
+                        // Jika localStorage kosong, muat data dummy
+                        console.log('localStorage kosong, memuat data dummy...');
+                        this.loadDummyData();
+                        this.saveDataToLocal(); // Simpan data dummy ke local
                     }
-                  
-                    const { data: users, error: userError } = await supabaseClient.from('users').select('*');
-                    if(userError) throw userError;
-
-                    const { data: items, error: itemError } = await supabaseClient.from('items').select('*');
-                    if(itemError) throw itemError;
                     
-                    const { data: loans, error: loanError } = await supabaseClient.from('loans').select('*');
-                    if(loanError) throw loanError;
-
-                    const { data: chats, error: chatError } = await supabaseClient.from('chats').select('*');
-                    if(chatError) throw chatError;
-                    
-                    // Isi data aplikasi dari hasil fetch
-                    this.users = users || [];
-                    this.items = items || [];
-                    // Konversi string tanggal dari Supabase menjadi objek Date
-                    this.loans = (loans || []).map(loan => ({
-                        ...loan,
-                        borrowDate: new Date(loan.borrowDate),
-                        dueDate: new Date(loan.dueDate),
-                        returnDate: loan.returnDate ? new Date(loan.returnDate) : null
-                    }));
-                    this.chats = (chats || []).map(chat => ({ ...chat, timestamp: new Date(chat.timestamp) }));
-                    
-                    // Ganti: Memuat pengumuman dari data lokal karena tabel 'announcements' mungkin tidak ada
+                    // Muat pengumuman (tetap dari data lokal)
                     this.announcements = [
                         { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
                         { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
                         { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
                     ];
 
-                    console.log('Data dari Supabase berhasil dimuat (pengumuman dari lokal):', this);
+                    console.log('Data berhasil dimuat:', this);
                   } catch (e) {
-                    console.error('Gagal memuat data dari Supabase:', e);
-                    // Fallback ke data dummy jika gagal
+                    console.error('Gagal memuat data:', e);
                     App.utils.showNotification(
-                        'Koneksi Gagal', 
-                        `Gagal terhubung ke database atau tabel tidak ditemukan (pastikan tabel 'users', 'items', 'loans', 'chats' ada). Aplikasi akan menggunakan data contoh.`, 
+                        'Data Error', 
+                        `Gagal memuat data dari localStorage. Memuat data contoh. Error: ${e.message}`, 
                         'warning'
                     );
-                    this.loadDummyData();
+                    this.loadDummyData(); // Fallback jika parse gagal
                   }
                 },
                 
@@ -632,6 +640,7 @@
                             dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null, returnDocumentation: null
                         };
                         App.data.loans.push(newLoan);
+                        App.data.saveDataToLocal(); // Simpan perubahan
                         App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`, 'success');
                         App.render.pinjam();
                     }
@@ -645,6 +654,7 @@
                         loan.returnDate = new Date(); 
                         loan.returnDocumentation = documentation;
                         item.available++;
+                        App.data.saveDataToLocal(); // Simpan perubahan
                         let message = `Makasih ya, sudah mengembalikan <b>${item.name}</b>.`;
                         let type = 'success';
                         if (penalty > 0) {
@@ -695,16 +705,9 @@
                             instagram: form.instagram.value.trim(),
                         };
                         
-                        if (newPassword) {
-                            user.password = newPassword;
-                        }
-                        
-                        // Simpan preferensi kustomisasi
-                        user.preferences.theme = form.themeSelector.value;
-                        user.preferences.animations = form.animationsToggle.checked;
-
                         App.state.currentUser = { ...user };
                         App.render.userProfile();
+                        App.data.saveDataToLocal(); // Simpan perubahan
                         
                         // Terapkan tema dan setelan animasi secara langsung
                         App.utils.applyTheme(user.preferences.theme);
@@ -727,6 +730,7 @@
                         icon: form.itemIcon.value || 'archive'
                     };
                     App.data.items.push(newItem);
+                    App.data.saveDataToLocal(); // Simpan perubahan
                     App.utils.showNotification('Berhasil!', `Aset baru "${newItem.name}" telah ditambahkan.`, 'success');
                     form.reset();
                     App.render.kelola_aset();
@@ -755,6 +759,7 @@
                         preferences: { theme: 'light', animations: true } // Preferensi default
                     };
                     App.data.users.push(newUser);
+                    App.data.saveDataToLocal(); // Simpan perubahan
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Akun untuk ${newUser.name} berhasil dibuat.`, 'success');
                     App.render.kelola_akun();
@@ -787,6 +792,7 @@
                         user.password = userData.password;
                     }
                     
+                    App.data.saveDataToLocal(); // Simpan perubahan
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Data akun ${user.name} berhasil diperbarui.`, 'success');
                     App.render.kelola_akun();
@@ -804,6 +810,7 @@
                         `Apakah Anda yakin ingin menghapus akun <strong>${userToDelete.name}</strong>? Aksi ini tidak dapat dibatalkan.`,
                         () => {
                             App.data.users = App.data.users.filter(u => u.id !== userId);
+                            App.data.saveDataToLocal(); // Simpan perubahan
                             App.utils.showNotification('Berhasil!', `Akun ${userToDelete.name} telah dihapus.`, 'success');
                             App.render.kelola_akun();
                         }
@@ -831,6 +838,7 @@
                         message: messageText, timestamp: new Date(), isRead: false, isNotified: false
                     };
                     App.data.chats.push(newMessage);
+                    App.data.saveDataToLocal(); // Simpan perubahan
                     App.render.chat(receiverId);
                 },
                 
@@ -1528,7 +1536,9 @@
                 const contactListHtml = messageSenders.map(senderId => { const sender = App.data.users.find(u => u.id === senderId); const isActive = senderId === activeChatUserId; return `<div class="p-3 border-b cursor-pointer ${isActive ? 'bg-blue-100' : 'hover:bg-slate-50'}" onclick="App.render.chat('${senderId}')"><p class="font-semibold">${sender.name} ${unreadCounts[senderId] > 0 ? `<span class="ml-2 text-xs text-white bg-red-500 rounded-full px-2 py-1">${unreadCounts[senderId]}</span>` : ''}</p><p class="text-xs text-gray-500">${sender.role}</p></div>`; }).join('') || `<div class="p-4 text-center text-gray-500">Belum ada pesan masuk.</div>`;
                 let chatBoxHtml = `<div class="h-full flex items-center justify-center text-gray-500">Pilih percakapan untuk ditampilkan.</div>`;
                 if(activeChatUserId) {
-                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); App.render.sidebar();
+                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); 
+                    App.data.saveDataToLocal(); // Simpan status "sudah dibaca"
+                    App.render.sidebar();
                     const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === activeChatUserId) || (c.senderId === activeChatUserId && c.receiverId === currentUser.id));
                     chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik balasan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
                 }
@@ -1547,6 +1557,7 @@
                 
                 // Tandai pesan dari admin sebagai sudah dibaca
                 App.data.chats.forEach(c => { if(c.senderId === admin.id && c.receiverId === currentUser.id) c.isRead = true; }); 
+                App.data.saveDataToLocal(); // Simpan status "sudah dibaca"
                 App.render.sidebar(); // Update badge
 
                 const messages = App.data.chats.filter(c => 
