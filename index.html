@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UATF-8">
+    <meta charset="UTF-8"> <!-- Perbaikan: Mengganti UATF-8 menjadi UTF-8 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIPINJOL - Sistem Peminjaman Online Sekolah</title>
+    <title>OSERT - Online School Equipment Borrowing System of SMAN 1 DRAMAGA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
     <!-- Library untuk Ekspor Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Tambahkan Supabase -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> --> <!-- Supabase dihapus -->
+    <!-- Library untuk Grafik (INI YANG DIPERBAIKI) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body, html {
             font-family: 'Poppins', sans-serif;
-            cursor: none; /* Sembunyikan kursor default */
+            cursor: none; /* Dihapus: Sembunyikan kursor default -> Diubah: Sembunyikan kursor default */
+        }
+        /* Target interaktif untuk menyembunyikan kursor */
+        a, button, .sidebar-link, [onclick], select {
+            cursor: none;
         }
         .splash-icon {
             opacity: 0;
@@ -32,6 +36,7 @@
         .sidebar-link:hover, .sidebar-link.active {
             background-color: #3b82f6; /* bg-blue-600 */
             color: white;
+            transform: translateX(4px); /* Animasi klik */
         }
         .notification-badge {
             position: absolute;
@@ -92,53 +97,50 @@
             background-size: cover;
             background-position: center;
         }
-        /* Style untuk kartu profil yang bisa digerakkan */
-        #profile-card {
-            cursor: grab;
-        }
-        #profile-card.dragging {
-            cursor: grabbing;
-            z-index: 30;
-        }
+        /* Style untuk kartu profil yang bisa digerakkan Dihapus */
         
-        /* Style untuk Kursor Kustom */
+        /* --- Gaya Kursor Kustom (Halus Baru) --- */
         #cursor-dot, #cursor-outline {
-            pointer-events: none;
             position: fixed;
             top: 0;
             left: 0;
-            border-radius: 50%;
-            z-index: 9999;
-            opacity: 0;
             transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition-property: transform, opacity;
         }
         #cursor-dot {
             width: 8px;
             height: 8px;
-            background-color: #3b82f6;
-            transition: transform 0.1s ease-out;
+            background-color: #3b82f6; /* bg-blue-600 */
+            transition-duration: 0.1s;
+            transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
         }
         #cursor-outline {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #3b82f6;
-            transition: transform 0.2s ease-out, background-color 0.2s ease, opacity 0.3s ease;
+            width: 30px;
+            height: 30px;
+            border: 2px solid #3b82f680; /* bg-blue-600 with opacity */
+            transition-duration: 0.2s;
+            transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
         }
         #cursor-outline.cursor-hover {
-            transform: translate(-50%, -50%) scale(1.4);
-            background-color: rgba(59, 130, 246, 0.1);
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.5;
         }
+        /* --- Akhir Gaya Kursor --- */
 
-        /* Animasi untuk Tombol AI */
+        /* Animasi untuk Tombol Panduan (Colorful) */
         @keyframes rainbowAnimation {
             0%{background-position:0% 50%}
             50%{background-position:100% 50%}
             100%{background-position:0% 50%}
         }
-        .ai-button-animated {
+        .guide-button-animated {
             background: linear-gradient(-45deg, #f38260, #e73c7e, #23a6d5, #23d5ab);
             background-size: 400% 400%;
             animation: rainbowAnimation 15s ease infinite;
+            color: white !important;
         }
 
         /* --- Gaya Kustomisasi --- */
@@ -158,10 +160,9 @@
         .dark .text-gray-600, .dark .text-gray-500 { color: var(--text-secondary); }
         .dark .border, .dark .border-b, .dark .border-t { border-color: var(--border-color); }
         .dark input, .dark select, .dark textarea { background-color: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-color); }
-        .dark .sidebar-link:not(.active):not(.ai-button-animated) { background-color: var(--bg-secondary); color: var(--text-primary); }
-        .dark .sidebar-link:not(.active):not(.ai-button-animated):hover { background-color: #4b5563; }
+        .dark .sidebar-link:not(.active):not(.guide-button-animated) { background-color: var(--bg-secondary); color: var(--text-primary); }
+        .dark .sidebar-link:not(.active):not(.guide-button-animated):hover { background-color: #4b5563; }
         .dark .bg-slate-100 { background-color: var(--bg-tertiary); }
-        .dark #ai-response-area { background-color: var(--bg-primary); }
         
         /* Tema Biru Sekolah */
         .theme-blue {
@@ -190,23 +191,51 @@
         .toast-notification.closing {
             animation: toast-out 0.5s ease-in forwards;
         }
+        
+        /* Animasi Peringatan (Warning) */
+        @keyframes shake-warning {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+        .warning-image-animated {
+            animation: shake-warning 0.8s ease-in-out;
+        }
+        
+        /* Animasi Panduan (Colorful) */
+        @keyframes color-text {
+            0% { color: #f38260; }
+            25% { color: #e73c7e; }
+            50% { color: #23a6d5; }
+            75% { color: #23d5ab; }
+            100% { color: #f38260; }
+        }
+        .guide-title-animated {
+            animation: color-text 5s ease infinite;
+        }
+        @keyframes pulse-light {
+            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+            50% { box-shadow: 0 0 20px 10px rgba(59, 130, 246, 0.4); }
+        }
+        .guide-card-animated {
+            animation: pulse-light 3s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-slate-100 antialiased">
-    <div id="cursor-dot"></div>
-    <div id="cursor-outline"></div>
+    <div id="cursor-dot"></div> <!-- Ditambahkan kembali -->
+    <div id="cursor-outline"></div> <!-- Ditambahkan kembali -->
     <div id="toast-container" class="fixed bottom-6 left-6 z-[9999] w-80 space-y-3"></div>
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="fixed inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex flex-col justify-center items-center z-50 text-white">
         <div class="text-center">
             <div class="flex justify-center items-center space-x-6 mb-6">
-                 <div class="splash-icon" id="icon1"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-check"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4Z"/><path d="M16 3h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4Z"/><path d="m16 12 2 2 4-4"/></svg></div>
-                <div class="splash-icon" id="icon2"><svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.084a1 1 0 0 0 0 1.838l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div>
-                <div class="splash-icon" id="icon3"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M21 12a3 3 0 1 0 .142-5.993"/><path d="M3 12a3 3 0 1 0 .142-5.993"/><path d="M12 21a3 3 0 1 0 .142-5.993"/><path d="M5.02 17.11a3 3 0 1 0 3.86-3.86"/><path d="M15.12 17.11a3 3 0 1 0 3.86-3.86"/><path d="M9.03 8.85a3 3 0 1 0-3.88 3.88"/><path d="M18.88 9.03a3 3 0 1 0-3.88 3.88"/><path d="M12 12v3m0 3v3m-3-12h3m3 0h3m-12 0H3m3 3 .75.75M12 12l.75.75M12 12l-.75.75m3-.75-.75.75m-1.5-1.5.75.75"/></svg></div>
+                 <!-- Logo Ikonik -->
+                <div class="splash-icon" id="icon2"><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.084a1 1 0 0 0 0 1.838l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div>
             </div>
-            <h1 class="text-4xl font-bold mb-2 splash-icon" id="title-splash">SIPINJOL</h1>
-            <p class="text-xl splash-icon" id="subtitle-splash">Sistem Peminjaman Online Sekolah</p>
+            <h1 class="text-4xl font-bold mb-2 splash-icon" id="title-splash">OSERT</h1>
+            <p class="text-xl splash-icon" id="subtitle-splash">Online School Equipment Borrowing System of SMAN 1 DRAMAGA</p>
         </div>
     </div>
 
@@ -214,8 +243,8 @@
     <div id="login-page" class="min-h-screen flex items-center justify-center bg-login-animated hidden relative">
         <div class="absolute inset-0 bg-black opacity-20"></div>
         <div class="max-w-md w-full bg-white/80 backdrop-blur-xl rounded-xl shadow-2xl p-8 m-4 z-10 border border-white/20">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Absen Dulu, Yuk!</h2>
-            <p class="text-center text-gray-600 mb-8">Masuk ke akun untuk mulai beraktivitas.</p>
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Selamat Datang di OSERT</h2>
+            <p class="text-center text-gray-600 mb-8">Masuk ke akun SMAN 1 Dramaga.</p>
             <form id="login-form">
                 <div class="mb-4">
                     <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
@@ -234,7 +263,7 @@
                     </select>
                 </div>
                 <p id="login-error" class="text-red-500 text-sm mb-4 text-center hidden"></p>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">Masuk Kelas</button>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">Login</button>
             </form>
         </div>
     </div>
@@ -245,28 +274,36 @@
             <!-- Sidebar -->
             <aside class="w-64 bg-white shadow-md flex-shrink-0 flex flex-col">
                 <div class="p-4 border-b">
-                    <h1 class="text-2xl font-bold text-blue-600">SIPINJOL</h1>
+                    <h1 class="text-2xl font-bold text-blue-600">OSERT</h1>
                     <p class="text-sm text-gray-500">SMAN 1 Dramaga</p>
-                    <div id="live-datetime" class="text-xs text-gray-500 mt-2 font-semibold"></div>
+                    <div id="live-datetime" class="text-xs text-gray-500 mt-2 font-semibold">
+                        <!-- Waktu dan Cuaca akan dimuat di sini -->
+                    </div>
                 </div>
                 <nav id="sidebar-nav" class="p-4 space-y-2 flex-1 overflow-y-auto"></nav>
+
+                <!-- === TOMBOL LOGOUT BARU === -->
+                <!-- Tombol ini ditempatkan di luar <nav> agar tidak ikut tergulir -->
+                <div class="p-4 border-t border-gray-200 dark:border-[var(--border-color)]">
+                    <button id="sidebar-logout-btn" class="w-full flex items-center justify-center space-x-2 bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                         <span>Logout</span>
+                    </button>
+                </div>
+                <!-- === AKHIR TOMBOL LOGOUT BARU === -->
+
             </aside>
 
             <!-- Konten Utama -->
             <main id="main-container" class="flex-1 p-6 overflow-y-auto relative transition-all duration-500">
                  <div class="absolute inset-0 bg-black opacity-0 transition-opacity duration-500" id="main-overlay"></div>
+                 <!-- Animasi Transisi Halaman -->
+                 <div id="page-transition-animation" class="fixed inset-0 bg-blue-500 z-[100]" style="transform: scaleY(0); transform-origin: top;"></div>
                 <div id="main-content" class="relative z-10"></div>
             </main>
         </div>
 
-        <!-- Kartu Profil Pengguna -->
-        <div id="profile-card" class="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-2xl p-4 w-64 z-20 border border-gray-200">
-             <div id="user-profile" class="flex items-center space-x-3 border-b border-gray-200 pb-3 mb-3"></div>
-            <button id="logout-btn" class="w-full flex items-center justify-center space-x-2 bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                 <span>Pulang</span>
-            </button>
-        </div>
+        <!-- Kartu Profil Pengguna Dihapus -->
     </div>
     
     <!-- Modal Universal -->
@@ -286,13 +323,14 @@
         <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
             <div class="text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check mx-auto mb-4 text-blue-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                <h3 class="text-2xl font-bold mb-4">Aturan Main SIPINJOL</h3>
+                <h3 class="text-2xl font-bold mb-4">Aturan Main OSERT</h3>
             </div>
             <div class="text-left text-gray-600 space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
-                <p>Selamat datang di SIPINJOL! Sebelum lanjut, yuk baca dulu beberapa aturan penting berikut:</p>
+                <p>Selamat datang di OSERT! Sebelum lanjut, yuk baca dulu beberapa aturan penting berikut:</p>
                 <ul class="list-disc list-inside space-y-2">
                     <li><strong>Jaga Baik-Baik:</strong> Semua barang yang kamu pinjam adalah milik sekolah. Tolong dijaga seperti barangmu sendiri, ya!</li>
-                    <li><strong>Tepat Waktu:</strong> Kembalikan barang sesuai tanggal jatuh tempo. Keterlambatan akan dikenakan denda sesuai kebijakan TU.</li>
+                    <li><strong>Tepat Waktu:</strong> Kembalikan barang sesuai tanggal jatuh tempo. Durasi pinjam maksimal 7 hari.</li>
+                    <li><strong>DENDA KETERLAMBATAN:</strong> Keterlambatan pengembalian akan dikenakan denda sebesar <strong>Rp 100.000</strong>.</li>
                     <li><strong>Rusak? Lapor!</strong> Jika barang rusak atau hilang saat kamu pinjam, segera lapor ke admin TU melalui fitur chat. Jangan didiamkan saja.</li>
                     <li><strong>Gunakan Sesuai Fungsi:</strong> Pakai barang pinjaman untuk kegiatan yang berhubungan dengan sekolah dan sesuai fungsinya.</li>
                     <li><strong>Satu Akun Satu Orang:</strong> Akun ini milikmu pribadi. Jangan pinjamkan username dan password ke temanmu.</li>
@@ -302,13 +340,22 @@
             <button id="rules-agree-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Saya Mengerti & Lanjutkan</button>
         </div>
     </div>
+    
+    <!-- Modal Peringatan dari Admin -->
+    <div id="warning-modal" class="modal">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-md w-full text-center">
+            <div id="warning-image-container" class="mx-auto mb-4 warning-image-animated">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-octagon mx-auto text-red-500"><path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            </div>
+            <h3 id="warning-title" class="text-2xl font-bold text-red-600 mb-4">PERINGATAN!</h3>
+            <div id="warning-body" class="text-gray-700 text-lg mb-6"></div>
+            <button id="warning-close-btn" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">Saya Mengerti</button>
+        </div>
+    </div>
 
     <script>
         // === KONFIGURASI SUPABASE DIHAPUS ===
         // Aplikasi ini sekarang akan menggunakan localStorage
-        // const SUPABASE_URL = '...'; 
-        // const SUPABASE_ANON_KEY = '...';
-        // const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
         // === ICONS (Lucide SVG Strings) ===
@@ -318,7 +365,6 @@
             history: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`,
             file_text: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
             help: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-help-circle"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
-            brain_circuit: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M21 12a3 3 0 1 0 .142-5.993"/><path d="M3 12a3 3 0 1 0 .142-5.993"/><path d="M12 21a3 3 0 1 0 .142-5.993"/><path d="M5.02 17.11a3 3 0 1 0 3.86-3.86"/><path d="M15.12 17.11a3 3 0 1 0 3.86-3.86"/><path d="M9.03 8.85a3 3 0 1 0-3.88 3.88"/><path d="M18.88 9.03a3 3 0 1 0-3.88 3.88"/><path d="M12 12v3m0 3v3m-3-12h3m3 0h3m-12 0H3m3 3 .75.75M12 12l.75.75M12 12l-.75.75m3-.75-.75.75m-1.5-1.5.75.75"/></svg>`,
             settings: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>`,
             users: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
             user: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-user-round rounded-full bg-gray-200 text-gray-500 p-1"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><circle cx="12" cy="12" r="10"/></svg>`,
@@ -333,20 +379,22 @@
             chat: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/></svg>`,
             modal_success: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2 text-green-500"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
             modal_warning: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
+            alert_octagon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-octagon"><path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`,
+            sticker: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smile-plus"><path d="M22 11v1a10 10 0 1 1-9-10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/><path d="M16 5h6"/><path d="M19 2v6"/></svg>`,
+            paperclip: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
+            image_up: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-up"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10.3"/><path d="m16 16-2-2-4 4"/><path d="M18 21v-6"/><path d="m15 18 3-3 3 3"/><circle cx="8" cy="10" r="2"/></svg>`,
         };
 
         // === APLIKASI UTAMA (Struktur Baru) ===
         const App = {
             // Data dan Konfigurasi
             data: {
-                // Data ini sekarang akan diisi dari Supabase
                 users: [],
                 items: [],
                 loans: [],
                 chats: [],
                 announcements: [],
 
-                // Fungsi baru untuk menyimpan data ke localStorage
                 saveDataToLocal: function() {
                     try {
                         const dataToSave = {
@@ -354,26 +402,23 @@
                             items: this.items,
                             loans: this.loans,
                             chats: this.chats
-                            // Pengumuman tidak perlu disimpan, bisa dimuat dari dummy
                         };
-                        localStorage.setItem('sipinjol_data', JSON.stringify(dataToSave));
+                        localStorage.setItem('osert_data', JSON.stringify(dataToSave));
                         console.log('Data disimpan ke localStorage.');
                     } catch (e) {
                         console.error('Gagal menyimpan data ke localStorage:', e);
                     }
                 },
 
-                // Fungsi untuk memuat data dari Supabase
                 loadData: async function() {
                   try {
-                    const localDataString = localStorage.getItem('sipinjol_data');
+                    const localDataString = localStorage.getItem('osert_data');
                     if (localDataString) {
                         console.log('Memuat data dari localStorage...');
                         const localData = JSON.parse(localDataString);
                         
                         this.users = localData.users || [];
                         this.items = localData.items || [];
-                        // Konversi string tanggal kembali menjadi objek Date
                         this.loans = (localData.loans || []).map(loan => ({
                             ...loan,
                             borrowDate: new Date(loan.borrowDate),
@@ -385,7 +430,6 @@
                             timestamp: new Date(chat.timestamp) 
                         }));
                     } else {
-                        // Jika localStorage kosong, muat data dummy
                         console.log('localStorage kosong, memuat data dummy...');
                         this.loadDummyData();
                         this.saveDataToLocal(); // Simpan data dummy ke local
@@ -393,9 +437,9 @@
                     
                     // Muat pengumuman (tetap dari data lokal)
                     this.announcements = [
-                        { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
-                        { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
-                        { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
+                        { title: 'Acara Sekolah: Class Meeting', content: 'Class Meeting akan diadakan mulai 10 Desember - 15 Desember 2025. Siapkan tim kelasmu!', icon: '📢' },
+                        { title: 'Kegiatan: Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
+                        { title: 'Akademik: Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
                     ];
 
                     console.log('Data berhasil dimuat:', this);
@@ -410,13 +454,12 @@
                   }
                 },
                 
-                // Data dummy jika koneksi ke Supabase gagal
                 loadDummyData: function() {
                     this.users = [
-                        { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'https://placehold.co/100x100/A0AEC0/FFFFFF?text=AT', preferences: { theme: 'light', animations: true } },
-                        { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'https://placehold.co/100x100/718096/FFFFFF?text=BB', preferences: { theme: 'light', animations: true } },
-                        { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'https://placehold.co/100x100/4A5568/FFFFFF?text=SL', preferences: { theme: 'light', animations: true } },
-                        { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'https://placehold.co/100x100/2D3748/FFFFFF?text=BS', preferences: { theme: 'light', animations: true } }
+                        { id: 'adm01', name: 'Admin TU', username: 'admin', password: 'password', role: 'admin', email: 'admin@sekolah.id', phone: '081234567890', address: 'Jl. Sekolah No. 1', bio: 'Mengelola administrasi sekolah.', social: { twitter: 'sekolah', instagram: 'sekolah' }, avatar: 'img/avatars/admin.png', preferences: { theme: 'light', animations: true }, warning: null },
+                        { id: 'guru01', name: 'Bapak Budi', username: 'budi', password: 'password', role: 'guru', email: 'budi@sekolah.id', phone: '081122334455', address: 'Jl. Cendrawasih No. 10', bio: 'Guru Matematika kelas XII.', social: { twitter: '', instagram: '' }, avatar: 'img/avatars/guru_budi.png', preferences: { theme: 'light', animations: true }, warning: null },
+                        { id: 'sis01', name: 'Siti Lestari', username: 'siti', password: 'password', role: 'siswa', email: 'siti@siswa.id', phone: '085678901234', address: 'Jl. Merpati No. 5', bio: 'Siswa kelas XI IPA 1. Suka membaca.', social: { twitter: 'siti', instagram: '' }, avatar: 'img/avatars/siti_lestari.png', preferences: { theme: 'light', animations: true }, warning: { type: 'Test', message: 'Ini adalah contoh peringatan untuk Siti.'} }, // Contoh user dengan warning
+                        { id: 'sis02', name: 'Budi Santoso', username: 'budisantoso', password: 'password', role: 'siswa', email: 'budi.s@siswa.id', phone: '087712345678', address: 'Jl. Elang No. 22', bio: 'Siswa kelas X-A. Hobi main basket.', social: { twitter: '', instagram: 'budibasket' }, avatar: 'img/avatars/budi_santoso.png', preferences: { theme: 'light', animations: true }, warning: null }
                     ];
                     this.items = [
                         { id: 'item01', name: 'Proyektor Epson', category: 'Elektronik', total: 5, available: 3, icon: 'projector' },
@@ -439,24 +482,18 @@
                         { chatId: 'C001', senderId: 'sis01', receiverId: 'adm01', message: 'Permisi Pak/Bu, proyektor di ruang multimedia sepertinya lampunya sudah redup.', timestamp: new Date(), isRead: false, isNotified: false },
                         { chatId: 'C002', senderId: 'adm01', receiverId: 'sis01', message: 'Baik, terima kasih laporannya. Akan segera kami cek.', timestamp: new Date(), isRead: true, isNotified: true }
                     ];
-                    this.announcements = [
-                        { title: 'Rapat OSIS', content: 'Diadakan pada hari Jumat, 3 Oktober 2025 di Ruang OSIS setelah jam pulang sekolah. Diharapkan kehadiran seluruh anggota.', icon: '📢' },
-                        { title: 'Lomba 17 Agustus', content: 'Pendaftaran lomba tarik tambang dan balap karung dibuka hingga tanggal 10 Agustus di meja piket.', icon: '🇮🇩' },
-                        { title: 'Pekan Ulangan Harian', content: 'Akan dilaksanakan mulai minggu depan. Persiapkan diri kalian dan semangat belajar!', icon: '📚' }
-                    ]
                 }
             },
             config: {
-                penalty: 10000 // Denda flat
+                penalty: 100000 // Denda flat Rp 100.000
             },
             
-            // State Aplikasi
             state: {
                 currentUser: null,
                 notificationChecker: null,
+                loanChartInstance: null, // <-- TAMBAHKAN INI
             },
             
-            // Elemen DOM
             DOM: {
                 splashScreen: document.getElementById('splash-screen'),
                 loginPage: document.getElementById('login-page'),
@@ -466,24 +503,29 @@
                 mainOverlay: document.getElementById('main-overlay'),
                 mainContent: document.getElementById('main-content'),
                 sidebarNav: document.getElementById('sidebar-nav'),
-                userProfile: document.getElementById('user-profile'),
-                logoutBtn: document.getElementById('logout-btn'),
+                /* userProfile Dihapus */
+                sidebarLogoutBtn: document.getElementById('sidebar-logout-btn'), // Diperbarui: ID tombol logout baru
                 loginError: document.getElementById('login-error'),
                 modal: document.getElementById('notification-modal'),
-                rulesModal: document.getElementById('rules-modal'),
-                modalIconContainer: document.getElementById('modal-icon-container'),
+                
+                // --- Perbaikan: Menambahkan referensi DOM modal yang hilang ---
                 modalTitle: document.getElementById('modal-title'),
                 modalBody: document.getElementById('modal-body'),
+                modalIconContainer: document.getElementById('modal-icon-container'),
                 modalFooter: document.getElementById('modal-footer'),
-                cursorDot: document.getElementById('cursor-dot'),
-                cursorOutline: document.getElementById('cursor-outline'),
+                // --- Akhir Perbaikan ---
+
+                rulesModal: document.getElementById('rules-modal'),
+                warningModal: document.getElementById('warning-modal'),
+                cursorDot: document.getElementById('cursor-dot'), // Ditambahkan kembali
+                cursorOutline: document.getElementById('cursor-outline'), // Ditambahkan kembali
+                pageTransition: document.getElementById('page-transition-animation'),
             },
 
-            // Inisialisasi
             init() {
                 this.startSplashScreen();
                 this.setupEventListeners();
-                this.utils.makeDraggable(document.getElementById('profile-card'));
+                /* makeDraggable Dihapus */
             },
 
             startSplashScreen() {
@@ -496,54 +538,75 @@
                     });
                 
                 setTimeout(() => {
-                    this.DOM.splashScreen.classList.add('hidden');
-                    this.DOM.loginPage.classList.remove('hidden');
+                    anime({
+                        targets: '#splash-screen',
+                        opacity: [1, 0],
+                        duration: 500,
+                        easing: 'easeInExpo',
+                        complete: () => {
+                            this.DOM.splashScreen.classList.add('hidden');
+                            this.DOM.loginPage.classList.remove('hidden');
+                            anime({
+                                targets: '#login-page > div',
+                                opacity: [0, 1],
+                                scale: [0.9, 1],
+                                duration: 500,
+                                easing: 'easeOutExpo'
+                            });
+                        }
+                    });
                 }, 3000);
             },
             
             setupEventListeners() {
                 this.DOM.loginForm.addEventListener('submit', (e) => this.handlers.handleLogin(e));
-                this.DOM.logoutBtn.addEventListener('click', () => this.handlers.handleLogout());
+                this.DOM.sidebarLogoutBtn.addEventListener('click', () => this.handlers.handleLogout()); // Diperbarui: Listener untuk tombol logout baru
                 this.DOM.modal.addEventListener('click', (e) => {
                     if (e.target === this.DOM.modal) this.utils.hideModal();
                 });
                 
                 document.getElementById('rules-agree-btn').addEventListener('click', () => {
                     this.DOM.rulesModal.classList.remove('show');
-                    this.logic.setupApp();
-                });
-
-                // Event Listeners untuk Kursor Kustom
-                window.addEventListener("mousemove", (e) => {
-                    const posX = e.clientX;
-                    const posY = e.clientY;
-
-                    App.DOM.cursorDot.style.transform = `translate(${posX}px, ${posY}px)`;
-                    App.DOM.cursorDot.style.opacity = '1';
-                    App.DOM.cursorOutline.style.opacity = '1';
-                    
+                    // Animasi masuk aplikasi
                     anime({
-                        targets: App.DOM.cursorOutline,
-                        translateX: posX,
-                        translateY: posY,
+                        targets: App.DOM.pageTransition,
+                        scaleY: [0, 1],
+                        transformOrigin: 'top',
                         duration: 400,
-                        easing: 'easeOutExpo'
+                        easing: 'easeInCubic',
+                        complete: () => {
+                            App.logic.setupApp();
+                            anime({
+                                targets: App.DOM.pageTransition,
+                                scaleY: [1, 0],
+                                transformOrigin: 'bottom',
+                                duration: 400,
+                                easing: 'easeOutCubic'
+                            });
+                        }
                     });
                 });
+                
+                document.getElementById('warning-close-btn').addEventListener('click', () => {
+                    App.utils.hideWarningModal();
+                });
 
-                document.body.addEventListener('mouseover', (e) => {
-                    if (e.target.matches('a, button, select, input, [onclick], .sidebar-link')) {
-                        App.DOM.cursorOutline.classList.add('cursor-hover');
+                // Event listener kursor kustom (Ditambahkan kembali)
+                window.addEventListener('mousemove', (e) => {
+                    if (App.DOM.cursorDot) {
+                        App.DOM.cursorDot.style.left = `${e.clientX}px`;
+                        App.DOM.cursorDot.style.top = `${e.clientY}px`;
+                    }
+                    if (App.DOM.cursorOutline) {
+                        App.DOM.cursorOutline.style.left = `${e.clientX}px`;
+                        App.DOM.cursorOutline.style.top = `${e.clientY}px`;
                     }
                 });
-                document.body.addEventListener('mouseout', (e) => {
-                     if (e.target.matches('a, button, select, input, [onclick], .sidebar-link')) {
-                        App.DOM.cursorOutline.classList.remove('cursor-hover');
-                    }
-                });
+                
+                App.utils.setupCursorHover(); // Panggil saat inisialisasi
+
             },
             
-            // Handler untuk Event
             handlers: {
                 handleLogin(e) {
                     e.preventDefault();
@@ -555,26 +618,60 @@
                     );
                     if (foundUser) {
                         App.state.currentUser = foundUser;
-                        // Set default preferences if none exist
                         if (!App.state.currentUser.preferences) {
                             App.state.currentUser.preferences = { theme: 'light', animations: true };
                         }
-                        App.DOM.loginPage.classList.add('hidden');
-                        App.DOM.appPage.classList.remove('hidden');
-                        // Tampilkan modal aturan dulu, baru setup aplikasi
-                        App.DOM.rulesModal.classList.add('show');
-                        App.DOM.loginError.classList.add('hidden');
+                        
+                        anime({
+                            targets: '#login-page',
+                            opacity: [1, 0],
+                            duration: 400,
+                            easing: 'easeInExpo',
+                            complete: () => {
+                                App.DOM.loginPage.classList.add('hidden');
+                                App.DOM.appPage.classList.remove('hidden');
+                                App.DOM.rulesModal.classList.add('show');
+                                App.DOM.loginError.classList.add('hidden');
+                                anime({
+                                    targets: '#app',
+                                    opacity: [0, 1],
+                                    duration: 400,
+                                    easing: 'easeOutExpo'
+                                });
+                            }
+                        });
+                        
                     } else {
                         App.DOM.loginError.textContent = 'Username, password, atau peran salah!';
                         App.DOM.loginError.classList.remove('hidden');
+                        anime({
+                            targets: '#login-page > div',
+                            translateX: [-10, 10, -10, 10, 0],
+                            duration: 300,
+                            easing: 'easeInOutQuad'
+                        });
                     }
                 },
                 handleLogout() {
                     App.state.currentUser = null;
-                    clearInterval(App.state.notificationChecker); // Hentikan pengecekan notifikasi
-                    App.DOM.appPage.classList.add('hidden');
-                    App.DOM.loginPage.classList.remove('hidden');
-                    App.DOM.loginForm.reset();
+                    clearInterval(App.state.notificationChecker);
+                    anime({
+                        targets: '#app',
+                        opacity: [1, 0],
+                        duration: 400,
+                        easing: 'easeInExpo',
+                        complete: () => {
+                            App.DOM.appPage.classList.add('hidden');
+                            App.DOM.loginPage.classList.remove('hidden');
+                            App.DOM.loginForm.reset();
+                            anime({
+                                targets: '#login-page',
+                                opacity: [0, 1],
+                                duration: 400,
+                                easing: 'easeOutExpo'
+                            });
+                        }
+                    });
                 },
                 handleUserFormSubmit(e) {
                     e.preventDefault();
@@ -589,34 +686,56 @@
                 }
             },
             
-            // Logika Inti Aplikasi
             logic: {
                 setupApp() {
                     App.render.sidebar();
-                    App.render.userProfile();
+                    /* render.userProfile() Dihapus */
                     App.logic.navigateTo('dashboard');
                     App.logic.checkLateReturns();
-                    // Terapkan preferensi pengguna saat aplikasi dimuat
                     App.utils.applyTheme(App.state.currentUser.preferences.theme);
                     App.utils.applyAnimationSetting(App.state.currentUser.preferences.animations);
-                    App.utils.startClock(); // Mulai jam digital
-                    App.logic.checkNewMessages(); // Cek pesan yang belum dibaca saat login
-                    App.state.notificationChecker = setInterval(App.logic.checkNewMessages, 5000); // Cek pesan baru setiap 5 detik
+                    App.utils.startClock();
+                    App.utils.getWeather(); // Panggil fungsi cuaca
+                    App.logic.checkNewMessages();
+                    App.state.notificationChecker = setInterval(App.logic.checkNewMessages, 5000);
+                    
+                    // Cek peringatan setelah setup
+                    setTimeout(() => App.logic.checkUserWarning(), 1000);
                 },
 
                 navigateTo(view) {
-                    document.querySelectorAll('.sidebar-link').forEach(link => {
-                        link.classList.toggle('active', link.dataset.view === view);
-                    });
-                    const isDashboard = view === 'dashboard';
-                    App.DOM.mainContainer.classList.toggle('bg-dashboard', isDashboard);
-                    App.DOM.mainOverlay.classList.toggle('opacity-50', isDashboard);
-                    const renderFunction = App.render[view];
-                    if (renderFunction) renderFunction();
-                    else App.DOM.mainContent.innerHTML = `<p>Halaman tidak ditemukan.</p>`;
                     anime({
-                        targets: '#main-content > *', opacity: [0, 1], translateY: [20, 0],
-                        duration: 400, easing: 'easeOutCubic'
+                        targets: App.DOM.pageTransition,
+                        scaleY: [0, 1],
+                        transformOrigin: 'top',
+                        duration: 300,
+                        easing: 'easeInCubic',
+                        complete: () => {
+                            document.querySelectorAll('.sidebar-link').forEach(link => {
+                                link.classList.toggle('active', link.dataset.view === view);
+                            });
+                            const isDashboard = view === 'dashboard';
+                            App.DOM.mainContainer.classList.toggle('bg-dashboard', isDashboard);
+                            App.DOM.mainOverlay.classList.toggle('opacity-50', isDashboard);
+                            const renderFunction = App.render[view];
+                            if (renderFunction) renderFunction();
+                            else App.DOM.mainContent.innerHTML = `<p>Halaman tidak ditemukan.</p>`;
+                            
+                            App.utils.setupCursorHover(); // Ditambahkan untuk elemen baru
+                            
+                            anime({
+                                targets: App.DOM.pageTransition,
+                                scaleY: [1, 0],
+                                transformOrigin: 'bottom',
+                                duration: 300,
+                                delay: 100,
+                                easing: 'easeOutCubic'
+                            });
+                            anime({
+                                targets: '#main-content > *', opacity: [0, 1], translateY: [20, 0],
+                                duration: 400, easing: 'easeOutCubic', delay: 100
+                            });
+                        }
                     });
                 },
 
@@ -626,7 +745,20 @@
                     const lateLoans = userLoans.filter(l => new Date() > l.dueDate);
                     if (lateLoans.length > 0) {
                         const lateItems = lateLoans.map(l => `<li><b>${App.data.items.find(i => i.id === l.itemId).name}</b></li>`).join('');
-                        App.utils.showNotification('Peringatan Keterlambatan!', `Kamu punya ${lateLoans.length} barang yang telat dikembalikan: <ul>${lateItems}</ul> Segera kembalikan ya!`, 'warning');
+                        App.utils.showNotification('Peringatan Keterlambatan!', `Kamu punya ${lateLoans.length} barang yang telat dikembalikan: <ul>${lateItems}</ul> Segera kembalikan dan bayar denda Rp ${App.config.penalty.toLocaleString('id-ID')}!`, 'warning');
+                    }
+                },
+                
+                checkUserWarning() {
+                    if (App.state.currentUser && App.state.currentUser.warning) {
+                        const warning = App.state.currentUser.warning;
+                        App.utils.showWarningModal(warning.message);
+                        // Hapus peringatan setelah ditampilkan
+                        const userIndex = App.data.users.findIndex(u => u.id === App.state.currentUser.id);
+                        if (userIndex > -1) {
+                            App.data.users[userIndex].warning = null;
+                            App.data.saveDataToLocal();
+                        }
                     }
                 },
                 
@@ -640,7 +772,7 @@
                             dueDate: new Date(new Date().setDate(new Date().getDate() + durationInDays)), returnDate: null, returnDocumentation: null
                         };
                         App.data.loans.push(newLoan);
-                        App.data.saveDataToLocal(); // Simpan perubahan
+                        App.data.saveDataToLocal();
                         App.utils.showNotification('Oke, Dicatat!', `Kamu berhasil meminjam <b>${item.name}</b>. Jangan lupa kembalikan sebelum ${App.utils.formatDate(newLoan.dueDate)}.`, 'success');
                         App.render.pinjam();
                     }
@@ -654,7 +786,7 @@
                         loan.returnDate = new Date(); 
                         loan.returnDocumentation = documentation;
                         item.available++;
-                        App.data.saveDataToLocal(); // Simpan perubahan
+                        App.data.saveDataToLocal();
                         let message = `Makasih ya, sudah mengembalikan <b>${item.name}</b>.`;
                         let type = 'success';
                         if (penalty > 0) {
@@ -670,11 +802,13 @@
                     e.preventDefault();
                     const form = e.target;
                     const errorEl = document.getElementById('profile-update-error');
-                    errorEl.classList.add('hidden'); // Reset error message
+                    errorEl.classList.add('hidden');
 
                     const newUsername = form.editUsername.value.trim();
                     const newPassword = form.newPassword.value;
                     const confirmPassword = form.confirmPassword.value;
+                    const theme = form.themeSelector.value;
+                    const animations = form.animationsToggle.checked;
 
                     const isUsernameTaken = App.data.users.some(
                         user => user.username === newUsername && user.id !== App.state.currentUser.id
@@ -704,12 +838,14 @@
                             twitter: form.twitter.value.trim(),
                             instagram: form.instagram.value.trim(),
                         };
+                        user.preferences = { theme: theme, animations: animations };
+                        
+                        if(newPassword) { user.password = newPassword; }
                         
                         App.state.currentUser = { ...user };
-                        App.render.userProfile();
-                        App.data.saveDataToLocal(); // Simpan perubahan
+                        /* render.userProfile() Dihapus */
+                        App.data.saveDataToLocal();
                         
-                        // Terapkan tema dan setelan animasi secara langsung
                         App.utils.applyTheme(user.preferences.theme);
                         App.utils.applyAnimationSetting(user.preferences.animations);
                         
@@ -730,7 +866,7 @@
                         icon: form.itemIcon.value || 'archive'
                     };
                     App.data.items.push(newItem);
-                    App.data.saveDataToLocal(); // Simpan perubahan
+                    App.data.saveDataToLocal();
                     App.utils.showNotification('Berhasil!', `Aset baru "${newItem.name}" telah ditambahkan.`, 'success');
                     form.reset();
                     App.render.kelola_aset();
@@ -756,10 +892,11 @@
                         email: userData.email,
                         phone: '', address: '', bio: '', social: { twitter: '', instagram: '' },
                         avatar: `https://placehold.co/100x100/718096/FFFFFF?text=${userData.fullName.charAt(0)}`,
-                        preferences: { theme: 'light', animations: true } // Preferensi default
+                        preferences: { theme: 'light', animations: true },
+                        warning: null // Tambahkan field warning
                     };
                     App.data.users.push(newUser);
-                    App.data.saveDataToLocal(); // Simpan perubahan
+                    App.data.saveDataToLocal();
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Akun untuk ${newUser.name} berhasil dibuat.`, 'success');
                     App.render.kelola_akun();
@@ -792,7 +929,7 @@
                         user.password = userData.password;
                     }
                     
-                    App.data.saveDataToLocal(); // Simpan perubahan
+                    App.data.saveDataToLocal();
                     App.utils.hideModal();
                     App.utils.showNotification('Sukses!', `Data akun ${user.name} berhasil diperbarui.`, 'success');
                     App.render.kelola_akun();
@@ -810,9 +947,30 @@
                         `Apakah Anda yakin ingin menghapus akun <strong>${userToDelete.name}</strong>? Aksi ini tidak dapat dibatalkan.`,
                         () => {
                             App.data.users = App.data.users.filter(u => u.id !== userId);
-                            App.data.saveDataToLocal(); // Simpan perubahan
+                            App.data.saveDataToLocal();
                             App.utils.showNotification('Berhasil!', `Akun ${userToDelete.name} telah dihapus.`, 'success');
                             App.render.kelola_akun();
+                        }
+                     );
+                },
+                
+                sendWarning(userId) {
+                     const userToWarn = App.data.users.find(u => u.id === userId);
+                     if (!userToWarn) return;
+                     
+                     App.utils.showConfirmModal(
+                        'Kirim Peringatan',
+                        `Anda akan mengirim peringatan ke <strong>${userToWarn.name}</strong> karena melanggar aturan (cth: telat mengembalikan). Lanjutkan?`,
+                        () => {
+                            const userIndex = App.data.users.findIndex(u => u.id === userId);
+                            if(userIndex > -1) {
+                                App.data.users[userIndex].warning = {
+                                    type: 'Rules',
+                                    message: 'Anda mendapat peringatan dari Admin karena tidak mematuhi aturan. Harap segera hubungi Admin.'
+                                };
+                                App.data.saveDataToLocal();
+                                App.utils.showNotification('Terkirim!', `Peringatan telah dikirim ke ${userToWarn.name}.`, 'success');
+                            }
                         }
                      );
                 },
@@ -827,7 +985,42 @@
                     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
                     const workbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Peminjaman");
-                    XLSX.writeFile(workbook, `Laporan Peminjaman SIPINJOL - ${new Date().toLocaleDateString('id-ID')}.xlsx`);
+                    XLSX.writeFile(workbook, `Laporan Peminjaman OSERT - ${new Date().toLocaleDateString('id-ID')}.xlsx`);
+                },
+
+                // --- FUNGSI BARU: Mengirim File (Foto/Dokumen) ---
+                sendFile(event, receiverId, fileType) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // Batasi ukuran file (misal: 2MB) agar localStorage tidak penuh
+                    const maxSize = 2 * 1024 * 1024; // 2MB
+                    if (file.size > maxSize) {
+                        App.utils.showNotification('File Terlalu Besar', 'Ukuran file tidak boleh melebihi 2MB.', 'warning');
+                        event.target.value = null; // Reset input file
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const dataUrl = e.target.result;
+                        const newMessage = {
+                            chatId: 'C' + (App.data.chats.length + 1).toString().padStart(3, '0'),
+                            senderId: App.state.currentUser.id,
+                            receiverId: receiverId,
+                            message: file.name, // Simpan nama file sebagai "pesan"
+                            type: fileType,      // 'image' atau 'file'
+                            content: dataUrl,    // Data Base64
+                            timestamp: new Date(),
+                            isRead: false,
+                            isNotified: false
+                        };
+                        App.data.chats.push(newMessage);
+                        App.data.saveDataToLocal();
+                        App.render.chat(receiverId); // Render ulang chat
+                    };
+                    reader.readAsDataURL(file);
+                    event.target.value = null; // Reset input file
                 },
 
                 sendMessage(receiverId, messageText) {
@@ -835,10 +1028,13 @@
                     const newMessage = {
                         chatId: 'C' + (App.data.chats.length + 1).toString().padStart(3, '0'),
                         senderId: App.state.currentUser.id, receiverId: receiverId,
-                        message: messageText, timestamp: new Date(), isRead: false, isNotified: false
+                        message: messageText,
+                        type: 'text', // Tipe pesan 'text'
+                        content: null,  // Tidak ada konten file
+                        timestamp: new Date(), isRead: false, isNotified: false
                     };
                     App.data.chats.push(newMessage);
-                    App.data.saveDataToLocal(); // Simpan perubahan
+                    App.data.saveDataToLocal();
                     App.render.chat(receiverId);
                 },
                 
@@ -851,7 +1047,6 @@
                     if (newMessages.length > 0) {
                         newMessages.forEach(msg => {
                             const sender = App.data.users.find(u => u.id === msg.senderId);
-                            // Cek apakah pengguna sedang di halaman chat dengan pengirim
                             const isChatting = document.querySelector(`#chat-form`) && App.DOM.mainContent.innerHTML.includes(`onclick="App.render.chat('${sender.id}')"`);
                             
                             if (sender && !isChatting) {
@@ -860,10 +1055,10 @@
                                     msg.message,
                                     sender.avatar
                                 );
-                                msg.isNotified = true; // Tandai sudah dinotifikasi
+                                msg.isNotified = true;
                             }
                         });
-                        App.render.sidebar(); // Update badge di sidebar
+                        App.render.sidebar();
                     }
                 },
 
@@ -888,11 +1083,10 @@
                         { id: 'riwayat', text: 'Catatan Peminjaman', icon: ICONS.history, roles: ['admin', 'guru', 'siswa'] },
                         { id: 'kelola_aset', text: 'Kelola Aset', icon: ICONS.kelola_aset, roles: ['admin'] },
                         { id: 'kelola_akun', text: 'Kelola Akun', icon: ICONS.users, roles: ['admin'] },
-                        { id: 'laporan', text: 'Laporan TU', icon: ICONS.file_text, roles: ['admin'] },
+                        { id: 'laporan', text: 'Laporan Admin', icon: ICONS.file_text, roles: ['admin'] },
                         { id: 'chat', text: 'Chat Admin', icon: ICONS.chat, roles: ['guru', 'siswa'] },
-                        { id: 'chat', text: 'Pesan Masuk', icon: ICONS.chat, roles: ['admin'] },
+                        { id: 'chat', text: 'Pesan Masuk (Inbox)', icon: ICONS.chat, roles: ['admin'] },
                         { id: 'pengaturan_akun', text: 'Pengaturan Akun', icon: ICONS.settings, roles: ['admin', 'guru', 'siswa'] },
-                        /* { id: 'tanya_ai', text: 'Tanya Kakak AI', icon: ICONS.brain_circuit, roles: ['admin', 'guru', 'siswa'] }, */ // <-- Dihapus
                         { id: 'panduan', text: 'Panduan Aplikasi', icon: ICONS.help, roles: ['admin', 'guru', 'siswa'] },
                     ];
                     const unreadMessages = App.data.chats.filter(c => c.receiverId === App.state.currentUser.id && !c.isRead).length;
@@ -907,22 +1101,22 @@
                         'bg-green-500/90 hover:bg-green-500 text-white',
                         'bg-teal-500/90 hover:bg-teal-500 text-white',
                         'bg-sky-500/90 hover:bg-sky-500 text-white',
-                        'bg-indigo-500/90 hover:bg-indigo-500 text-white' // Nila
+                        'bg-indigo-500/90 hover:bg-indigo-500 text-white',
+                        'bg-violet-500/90 hover:bg-violet-500 text-white',
+                        'bg-fuchsia-500/90 hover:bg-fuchsia-500 text-white',
+                        'bg-rose-500/90 hover:bg-rose-500 text-white'
                     ];
 
                     let colorCounter = 0;
 
                     App.DOM.sidebarNav.innerHTML = visibleLinks
                         .map((link, index) => {
-                            const isChatAdmin = link.text === 'Pesan Masuk' && unreadMessages > 0;
+                            const isChatAdmin = (link.text === 'Chat Admin' || link.text === 'Pesan Masuk (Inbox)') && unreadMessages > 0;
                             let extraClasses = '';
                             
-                            if (currentUserRole === 'admin') {
-                                /* Logika styling 'tanya_ai' dihapus */
-                                extraClasses = sequentialColors[colorCounter % sequentialColors.length];
-                                colorCounter++;
-                            } else { // Untuk 'guru' dan 'siswa'
-                                /* Logika styling 'tanya_ai' dihapus */
+                            if (link.id === 'panduan') {
+                                extraClasses = 'guide-button-animated';
+                            } else {
                                 extraClasses = sequentialColors[colorCounter % sequentialColors.length];
                                 colorCounter++;
                             }
@@ -935,7 +1129,8 @@
                     });
                 },
 
-                userProfile() { /* same as before */ },
+                /* Fungsi render.userProfile() Dihapus */
+                
                 dashboard() {
                     if (App.data.announcements.length === 0) {
                         App.DOM.mainContent.innerHTML = `<div class="text-center text-white"><p>Memuat data...</p></div>`;
@@ -943,6 +1138,11 @@
                     }
                     const announcement = App.data.announcements[Math.floor(Math.random() * App.data.announcements.length)];
                     const popularItem = App.logic.getMostPopularItem();
+                    const activeLoans = App.data.loans.filter(l => !l.returnDate);
+                    const userLoans = App.state.currentUser.role === 'admin' ? activeLoans.length : activeLoans.filter(l => l.userId === App.state.currentUser.id).length;
+                    
+                    let roleSpecificStatLabel = App.state.currentUser.role === 'admin' ? 'Total Barang Dipinjam' : 'Barang Saya Pinjam';
+                    
                     App.DOM.mainContent.innerHTML = `
                         <div class="space-y-6">
                             <div>
@@ -955,42 +1155,195 @@
                                     <p class="font-semibold text-gray-800">${announcement.title}</p>
                                     <p class="text-gray-700">${announcement.content}</p>
                                 </div>
-                                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-md">
-                                    <h3 class="font-bold text-xl text-indigo-600 mb-3">⭐ Paling Populer</h3>
-                                    ${popularItem ? `
-                                        <div class="flex items-center gap-4">
-                                            <span class="text-3xl">${ICONS[popularItem.icon] || ICONS.archive}</span>
-                                            <div>
-                                                <p class="font-semibold text-gray-800">${popularItem.name}</p>
-                                                <p class="text-sm text-gray-600">Jadi favorit untuk dipinjam!</p>
-                                            </div>
+                                <div class="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-md space-y-4">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-3xl p-2 bg-indigo-100 text-indigo-600 rounded-full">${ICONS.archive}</span>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">${roleSpecificStatLabel}</p>
+                                            <p class="text-2xl font-bold text-gray-900">${userLoans}</p>
                                         </div>
-                                    ` : `<p class="text-gray-600">Belum ada data peminjaman.</p>`}
+                                    </div>
+                                    <div class="flex items-center gap-3 border-t pt-4">
+                                        <span class="text-3xl p-2 bg-amber-100 text-amber-600 rounded-full">⭐</span>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">Paling Populer</p>
+                                            <p class="text-lg font-bold text-gray-900">${popularItem ? popularItem.name : '-'}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>`;
                 },
-                pinjam() { /* same as before */ },
-                kembalikan() { /* same as before */ },
-                riwayat() { /* same as before */ },
-                kelola_aset() { /* same as before */ },
-                kelola_akun() { /* new render function */ },
+                pinjam() {
+                    const categories = [...new Set(App.data.items.map(item => item.category))];
+                    let itemsHtml = categories.map(category => {
+                        const itemsInCategory = App.data.items.filter(item => item.category === category);
+                        return `<div class="mb-8"><h3 class="text-xl font-bold text-gray-700 mb-4 pb-2 border-b-2 border-blue-200">${category}</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        ${itemsInCategory.map(item => `<div class="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center transition-all hover:shadow-lg hover:-translate-y-1">
+                            <div class="text-blue-500 mb-3">${ICONS[item.icon] || ICONS.archive}</div>
+                            <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                            <p class="text-gray-500 text-sm mb-3">Sisa: ${item.available} / ${item.total}</p>
+                            <button class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                                onclick="App.utils.showBorrowModal('${item.id}')" ${item.available === 0 ? 'disabled' : ''}>
+                                ${item.available === 0 ? 'Lagi Dipakai' : 'Pinjam'}
+                            </button></div>`).join('')}</div></div>`;
+                    }).join('');
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Barang Inventaris</h2>${itemsHtml}</div>`;
+                },
+                kembalikan() {
+                    const loansToReturn = App.data.loans.filter(l => (App.state.currentUser.role === 'admin' || l.userId === App.state.currentUser.id) && !l.returnDate).sort((a,b) => a.dueDate - b.dueDate);
+                    let loansHtml = loansToReturn.map(loan => {
+                        const item = App.data.items.find(i => i.id === loan.itemId);
+                        const user = App.data.users.find(u => u.id === loan.userId);
+                        const isLate = new Date() > loan.dueDate;
+                        return `<tr class="border-b ${isLate ? 'bg-red-50' : ''}"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td><td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-600" onclick="App.utils.showReturnModal('${loan.loanId}')">Kembalikan</button></td></tr>`;
+                    }).join('') || `<tr><td colspan="4" class="text-center py-8 text-gray-500">Aman! Gak ada barang yang sedang kamu pinjam.</td></tr>`;
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kembalikan Barang</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Jatuh Tempo</th><th class="py-3 px-4">Aksi</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
+                },
+                riwayat() {
+                    const isAdmin = App.state.currentUser.role === 'admin';
+                    let userLoans = isAdmin ? [...App.data.loans] : App.data.loans.filter(l => l.userId === App.state.currentUser.id);
+                    userLoans.sort((a, b) => b.borrowDate - a.borrowDate);
+
+                    let adminAnalysisHtml = '';
+                    if (isAdmin) {
+                        const activeLoans = App.data.loans.filter(l => !l.returnDate);
+                        const popularItem = App.logic.getMostPopularItem();
+                        
+                        const userLoanCounts = App.data.loans.reduce((acc, loan) => {
+                            acc[loan.userId] = (acc[loan.userId] || 0) + 1;
+                            return acc;
+                        }, {});
+                        let mostActiveUser = { name: '-', loans: 0 };
+                        if (Object.keys(userLoanCounts).length > 0) {
+                            const mostActiveUserId = Object.keys(userLoanCounts).reduce((a, b) => userLoanCounts[a] > userLoanCounts[b] ? a : b);
+                            mostActiveUser.name = App.data.users.find(u => u.id === mostActiveUserId).name;
+                            mostActiveUser.loans = userLoanCounts[mostActiveUserId];
+                        }
+                        
+                        adminAnalysisHtml = `
+                        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjaman Aktif</p><p class="text-2xl font-bold">${activeLoans.length}</p></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Total Transaksi</p><p class="text-2xl font-bold">${App.data.loans.length}</p></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Aset Terpopuler</p><p class="text-lg font-bold truncate">${popularItem ? popularItem.name : '-'}</p></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjam Teraktif</p><p class="text-lg font-bold truncate">${mostActiveUser.name} (${mostActiveUser.loans}x)</p></div>
+                        </div>
+                        `;
+                    }
+
+                    const loansHtml = userLoans.map(loan => {
+                        const item = App.data.items.find(i => i.id === loan.itemId);
+                        const user = App.data.users.find(u => u.id === loan.userId);
+                        let statusBadge;
+                        if (loan.returnDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Sudah Kembali</span>`;
+                        else if (new Date() > loan.dueDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Telat</span>`;
+                        else statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Dipinjam</span>`;
+                        
+                        let docButton = '';
+                        if(isAdmin && loan.returnDocumentation) {
+                            docButton = `<button class="text-blue-600 hover:underline text-xs" onclick="App.utils.showDocumentationModal('${loan.loanId}')">Lihat</button>`;
+                        }
+                        
+                        return `<tr class="border-b"><td class="py-3 px-4">${item.name}</td>${isAdmin ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td><td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td><td class="py-3 px-4">${statusBadge}</td>${isAdmin ? `<td class="py-3 px-4 text-center">${docButton}</td>`: ''}</tr>`;
+                    }).join('') || `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-8 text-gray-500">Belum ada catatan peminjaman.</td></tr>`;
+
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2>${adminAnalysisHtml}<div class="bg-white rounded-xl shadow-md overflow-hidden"><div class="max-h-[60vh] overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-4">Nama Barang</th>${isAdmin ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Tgl Pinjam</th><th class="py-3 px-4">Tgl Kembali</th><th class="py-3 px-4">Status</th>${isAdmin ? '<th class="py-3 px-4 text-center">Dokumentasi</th>': ''}</tr></thead><tbody>${loansHtml}</tbody></table></div></div></div>`;
+                },
+                kelola_aset() {
+                    const itemsHtml = App.data.items.map(item => `<tr class="border-b"><td class="py-2 px-3">${item.name}</td><td class="py-2 px-3">${item.category}</td><td class="py-2 px-3 text-center">${item.available} / ${item.total}</td></tr>`).join('');
+                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kelola Aset Sekolah</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Daftar Aset Saat Ini</h3><div class="max-h-96 overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-3">Nama Barang</th><th class="py-3 px-3">Kategori</th><th class="py-3 px-3 text-center">Tersedia</th></tr></thead><tbody>${itemsHtml}</tbody></table></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Tambah Aset Baru</h3><form id="add-item-form" class="space-y-4"><div><label for="itemName" class="block text-sm font-medium">Nama Barang</label><input type="text" id="itemName" name="itemName" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemCategory" class="block text-sm font-medium">Kategori</label><select id="itemCategory" name="itemCategory" class="mt-1 w-full px-3 py-2 border rounded-lg" required><option>Elektronik</option><option>Olahraga</option><option>Laboratorium</option><option>Kelas</option><option>Lainnya</option></select></div><div><label for="itemTotal" class="block text-sm font-medium">Jumlah Total</label><input type="number" id="itemTotal" name="itemTotal" min="1" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemIcon" class="block text-sm font-medium">Nama Ikon (dari Lucide)</label><input type="text" id="itemIcon" name="itemIcon" placeholder="cth: archive" class="mt-1 w-full px-3 py-2 border rounded-lg"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Tambah</button></form></div></div></div>`;
+                    document.getElementById('add-item-form').addEventListener('submit', App.logic.addItem);
+                },
+                kelola_akun() {
+                    const users = App.data.users;
+                    const usersHtml = users.map(user => `
+                        <tr class="border-b">
+                            <td class="p-3 flex items-center gap-3">
+                                <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <p class="font-bold">${user.name}</p>
+                                    <p class="text-xs text-gray-500">${user.email}</p>
+                                </div>
+                            </td>
+                            <td class="p-3">${user.username}</td>
+                            <td class="p-3 capitalize">${user.role}</td>
+                            <td class="p-3">
+                                <div class="flex gap-2 flex-wrap">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="App.utils.showUserModal('${user.id}')">Edit</button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm" onclick="App.logic.deleteUser('${user.id}')">Hapus</button>
+                                    <button class="text-orange-600 hover:text-orange-800 text-sm" onclick="App.logic.sendWarning('${user.id}')">Peringatan</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    App.DOM.mainContent.innerHTML = `
+                        <div>
+                            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                                <h2 class="text-3xl font-bold text-gray-800">Kelola Akun Pengguna</h2>
+                                <button onclick="App.utils.showUserModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-blue-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+                                    Tambah Akun
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                                <table class="w-full text-sm text-left text-gray-600">
+                                    <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
+                                        <tr>
+                                            <th class="py-3 px-3">Nama Lengkap</th>
+                                            <th class="py-3 px-3">Username</th>
+                                            <th class="py-3 px-3">Peran</th>
+                                            <th class="py-3 px-3">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${usersHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                },
                 laporan() { 
                      const allLoans = App.data.loans;
                      const activeLoans = allLoans.filter(l => !l.returnDate);
-                     const lateLoans = activeLoans.filter(l => new Date() > l.dueDate);
+                     const lateLoans = activeLoans.filter(l => !l.returnDate && new Date() > l.dueDate);
                      const totalPenalty = allLoans.reduce((sum, loan) => sum + App.utils.calculatePenalty(loan), 0);
+                     
+                     // --- LOGIKA BARU UNTUK STATISTIK REAL-TIME (Kartu) ---
+                     const now = new Date();
+                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Mulai hari ini (00:00)
+                     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1); // Mulai bulan ini
+                     const thisYear = new Date(now.getFullYear(), 0, 1); // Mulai tahun ini
+                     
+                     // Peminjaman
+                     const todayLoans = allLoans.filter(l => l.borrowDate >= today).length;
+                     const monthLoans = allLoans.filter(l => l.borrowDate >= thisMonth).length;
+                     const yearLoans = allLoans.filter(l => l.borrowDate >= thisYear).length;
+                     // Pengembalian
+                     const todayReturns = allLoans.filter(l => l.returnDate && l.returnDate >= today).length;
+                     const monthReturns = allLoans.filter(l => l.returnDate && l.returnDate >= thisMonth).length;
+                     const yearReturns = allLoans.filter(l => l.returnDate && l.returnDate >= thisYear).length;
+                     // --- AKHIR LOGIKA BARU ---
+                     
                      const stats = [
-                        {label: 'Total Peminjaman', value: allLoans.length, icon: ICONS.history},
-                        {label: 'Sedang Dipinjam', value: activeLoans.length, icon: ICONS.archive},
-                        {label: 'Keterlambatan', value: lateLoans.length, icon: ICONS.modal_warning},
+                        {label: 'Pinjam (Hari Ini)', value: todayLoans, icon: ICONS.dashboard},
+                        {label: 'Kembali (Hari Ini)', value: todayReturns, icon: ICONS.kembalikan},
+                        {label: 'Pinjam (Bulan Ini)', value: monthLoans, icon: ICONS.archive},
+                        {label: 'Kembali (Bulan Ini)', value: monthReturns, icon: ICONS.kembalikan},
+                        {label: 'Pinjam (Tahun Ini)', value: yearLoans, icon: ICONS.history},
+                        {label: 'Kembali (Tahun Ini)', value: yearReturns, icon: ICONS.kembalikan},
+                        {label: 'Total Sedang Dipinjam', value: activeLoans.length, icon: ICONS.archive},
+                        {label: 'Total Keterlambatan', value: lateLoans.length, icon: ICONS.modal_warning},
+                        {label: 'Total Transaksi (Semua)', value: allLoans.length, icon: ICONS.history},
                         {label: 'Total Potensi Denda', value: `Rp ${totalPenalty.toLocaleString('id-ID')}`, icon: ICONS.file_text},
                      ];
 
                     App.DOM.mainContent.innerHTML = `
                         <div>
                             <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                                <h2 class="text-3xl font-bold text-gray-800">Laporan Peminjaman</h2>
+                                <h2 class="text-3xl font-bold text-gray-800">Laporan Administratif</h2>
                                 <button id="export-excel-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-green-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                     Ekspor ke Excel
@@ -999,6 +1352,22 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                                 ${stats.map(s => `<div class="bg-white p-4 rounded-xl shadow-md flex items-center gap-4"><div class="text-blue-500">${s.icon}</div><div><p class="text-gray-600">${s.label}</p><p class="text-2xl font-bold">${s.value}</p></div></div>`).join('')}
                             </div>
+                            
+                            <!-- KONTEN GRAFIK BARU -->
+                            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                                <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+                                    <h3 class="text-xl font-bold text-gray-800">Tren Peminjaman & Pengembalian</h3>
+                                    <div class="flex gap-2" id="chart-toggles">
+                                        <button class="chart-toggle-btn bg-blue-600 text-white py-1 px-3 rounded-lg text-sm transition-all" data-timeframe="monthly">30 Hari</button>
+                                        <button class="chart-toggle-btn bg-gray-200 text-gray-700 py-1 px-3 rounded-lg text-sm hover:bg-gray-300 transition-all" data-timeframe="yearly">12 Bulan</button>
+                                    </div>
+                                </div>
+                                <div class="relative" style="height: 350px;">
+                                    <canvas id="loanTrendChart"></canvas>
+                                </div>
+                            </div>
+                            <!-- AKHIR KONTEN GRAFIK BARU -->
+
                             <div class="bg-white rounded-xl shadow-md p-6">
                                 <h3 class="text-xl font-bold mb-4">Detail Semua Peminjaman</h3>
                                 <div class="overflow-x-auto">
@@ -1007,14 +1376,430 @@
                             </div>
                         </div>`;
                     document.getElementById('export-excel-btn').addEventListener('click', App.logic.exportToExcel);
+                    
+                    // --- PANGGILAN BARU UNTUK GRAFIK ---
+                    App.render.initLaporanChart('monthly'); // Render default
+                    document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const timeframe = e.target.dataset.timeframe;
+                            App.render.initLaporanChart(timeframe);
+                            // Update style tombol
+                            document.querySelectorAll('.chart-toggle-btn').forEach(b => {
+                                b.classList.remove('bg-blue-600', 'text-white');
+                                b.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                            });
+                            e.target.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                            e.target.classList.add('bg-blue-600', 'text-white');
+                        });
+                    });
+                    // --- AKHIR PANGGILAN BARU ---
                 },
-                chat(contactId) { /* same as before */ },
-                tanya_ai() { /* same as before */ },
-                panduan() { /* same as before */ },
+                // --- FUNGSI BARU UNTUK MEMBUAT GRAFIK ---
+                initLaporanChart(timeframe) {
+                    const ctx = document.getElementById('loanTrendChart');
+                    if (!ctx) return; 
+                    
+                    // Hancurkan grafik sebelumnya jika ada, untuk membuat yang baru
+                    if (App.state.loanChartInstance) {
+                        App.state.loanChartInstance.destroy();
+                    }
+
+                    let labels = [];
+                    let borrowData = [];
+                    let returnData = [];
+                    const allLoans = App.data.loans;
+                    const now = new Date();
+
+                    if (timeframe === 'monthly') {
+                        // Data untuk 30 hari terakhir
+                        const days = 30;
+                        for (let i = days - 1; i >= 0; i--) {
+                            const date = new Date(now);
+                            date.setDate(now.getDate() - i);
+                            
+                            const label = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                            labels.push(label);
+                            
+                            const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+                            const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+
+                            const borrowsOnDay = allLoans.filter(loan => 
+                                loan.borrowDate >= startOfDay && loan.borrowDate <= endOfDay
+                            ).length;
+                            borrowData.push(borrowsOnDay);
+
+                            const returnsOnDay = allLoans.filter(loan => 
+                                loan.returnDate && loan.returnDate >= startOfDay && loan.returnDate <= endOfDay
+                            ).length;
+                            returnData.push(returnsOnDay);
+                        }
+                    } else if (timeframe === 'yearly') {
+                        // Data untuk 12 bulan terakhir
+                        const months = 12;
+                        for (let i = months - 1; i >= 0; i--) {
+                            const date = new Date(now);
+                            date.setMonth(now.getMonth() - i);
+                            
+                            const label = date.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
+                            labels.push(label);
+
+                            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+                            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+                            
+                            const borrowsInMonth = allLoans.filter(loan => 
+                                loan.borrowDate >= startOfMonth && loan.borrowDate <= endOfMonth
+                            ).length;
+                            borrowData.push(borrowsInMonth);
+
+                            const returnsInMonth = allLoans.filter(loan => 
+                                loan.returnDate && loan.returnDate >= startOfMonth && loan.returnDate <= endOfMonth
+                            ).length;
+                            returnData.push(returnsInMonth);
+                        }
+                    }
+                    
+                    // Buat instance Chart baru dan simpan di state
+                    App.state.loanChartInstance = new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Peminjaman',
+                                    data: borrowData,
+                                    borderColor: 'rgb(59, 130, 246)',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                },
+                                {
+                                    label: 'Pengembalian',
+                                    data: returnData,
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                    fill: true,
+                                    tension: 0.3
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { 
+                                        // Pastikan angka di sumbu Y adalah bilangan bulat (1, 2, 3... bukan 1.5)
+                                        stepSize: 1,
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: { 
+                                    mode: 'index',
+                                    intersect: false 
+                                }
+                            }
+                        }
+                    });
+                },
+                // --- AKHIR FUNGSI GRAFIK ---
+                chat(activeChatUserId) {
+                    const currentUser = App.state.currentUser;
+
+                    // --- HELPER RENDER PESAN ---
+                    // Fungsi ini akan menentukan cara menampilkan pesan (teks, gambar, atau file)
+                    const renderMessageContent = (c) => {
+                        // Cek 'c.type' untuk menentukan render
+                        switch (c.type) {
+                            case 'image':
+                                // Jika gambar, tampilkan <img>
+                                return `<img src="${c.content}" alt="Gambar" class="rounded-lg max-w-xs object-contain" style="max-height: 200px;">
+                                        <p class="mt-1 text-sm">${c.message}</p>`; // Tampilkan nama file
+                            case 'file':
+                                // Jika file, buat link download
+                                return `<a href="${c.content}" download="${c.message}" class="flex items-center gap-2 bg-slate-300 p-3 rounded-lg hover:bg-slate-400 text-gray-800 hover:text-black">
+                                            ${ICONS.paperclip}
+                                            <span class="font-medium underline">${c.message}</span>
+                                        </a>`;
+                            default:
+                                // 'text' atau pesan lama (tanpa c.type)
+                                return c.message.replace(/\n/g, '<br>'); // Menjaga line break
+                        }
+                    };
+                    
+                    // --- PERUBAHAN HTML INPUT CHAT ---
+                    // Tombol stiker dihapus
+                    // Tombol foto & file diubah untuk memicu input file
+                    const chatInputHtml = `
+                        <div class="p-4 border-t bg-slate-50">
+                            <form id="chat-form" class="flex gap-2">
+                                <input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan...">
+                                <!-- Tombol Foto (Memicu input) -->
+                                <button type="button" id="chat-image-btn" class="p-2 text-gray-500 hover:text-blue-600">${ICONS.image_up}</button>
+                                <!-- Tombol File (Memicu input) -->
+                                <button type="button" id="chat-file-btn" class="p-2 text-gray-500 hover:text-blue-600">${ICONS.paperclip}</button>
+                                <!-- Tombol Stiker Dihapus -->
+                                <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button>
+                            </form>
+                            <!-- Input file tersembunyi -->
+                            <input type="file" id="chat-image-input" accept="image/*" class="hidden">
+                            <input type="file" id="chat-file-input" accept=".pdf,.doc,.docx,.txt,.zip" class="hidden">
+                        </div>
+                    `;
+
+                    if (currentUser.role === 'admin') {
+                        const messageSenders = [...new Set(App.data.chats.map(c => c.senderId).filter(id => id !== currentUser.id))];
+                        const unreadCounts = messageSenders.reduce((acc, senderId) => { acc[senderId] = App.data.chats.filter(c => c.senderId === senderId && c.receiverId === currentUser.id && !c.isRead).length; return acc; }, {});
+                        const contactListHtml = messageSenders.map(senderId => { const sender = App.data.users.find(u => u.id === senderId); const isActive = senderId === activeChatUserId; return `<div class="p-3 border-b cursor-pointer ${isActive ? 'bg-blue-100' : 'hover:bg-slate-50'}" onclick="App.render.chat('${senderId}')"><p class="font-semibold">${sender.name} ${unreadCounts[senderId] > 0 ? `<span class="ml-2 text-xs text-white bg-red-500 rounded-full px-2 py-1">${unreadCounts[senderId]}</span>` : ''}</p><p class="text-xs text-gray-500">${sender.role}</p></div>`; }).join('') || `<div class="p-4 text-center text-gray-500">Belum ada pesan masuk.</div>`;
+                        let chatBoxHtml = `<div class="h-full flex items-center justify-center text-gray-500">Pilih percakapan untuk ditampilkan.</div>`;
+                        
+                        if(activeChatUserId) {
+                            App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); 
+                            App.data.saveDataToLocal();
+                            App.render.sidebar();
+                            const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === activeChatUserId) || (c.senderId === activeChatUserId && c.receiverId === currentUser.id)).sort((a,b) => a.timestamp - b.timestamp);
+                            
+                            // PERUBAHAN: Menggunakan renderMessageContent
+                            chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `
+                                <div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}">
+                                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">
+                                        ${renderMessageContent(c)}
+                                        <div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div>
+                                    </div>
+                                </div>`).join('')}
+                            </div>${chatInputHtml}`;
+                        }
+                        App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pesan Masuk (Inbox)</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-xl shadow-md" style="height: 70vh;"><div class="md:col-span-1 border-r overflow-y-auto">${contactListHtml}</div><div class="md:col-span-2 flex flex-col">${chatBoxHtml}</div></div></div>`;
+                        
+                        if(activeChatUserId && document.getElementById('chat-form')) {
+                            document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(activeChatUserId, document.getElementById('chat-input').value); });
+                            
+                            // --- LISTENER BARU (ADMIN) ---
+                            document.getElementById('chat-image-btn').onclick = () => document.getElementById('chat-image-input').click();
+                            document.getElementById('chat-file-btn').onclick = () => document.getElementById('chat-file-input').click();
+                            document.getElementById('chat-image-input').onchange = (e) => App.logic.sendFile(e, activeChatUserId, 'image');
+                            document.getElementById('chat-file-input').onchange = (e) => App.logic.sendFile(e, activeChatUserId, 'file');
+
+                            document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
+                        }
+                    } else {
+                        // LOGIKA UNTUK GURU DAN SISWA
+                        const admin = App.data.users.find(u => u.role === 'admin');
+                        if (!admin) {
+                            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><p class="text-gray-600">Fitur chat sedang tidak tersedia. Tidak ada admin yang terdeteksi.</p></div>`;
+                            return;
+                        }
+                        
+                        App.data.chats.forEach(c => { if(c.senderId === admin.id && c.receiverId === currentUser.id) c.isRead = true; }); 
+                        App.data.saveDataToLocal();
+                        App.render.sidebar();
+
+                        const messages = App.data.chats.filter(c => 
+                            (c.senderId === currentUser.id && c.receiverId === admin.id) || 
+                            (c.senderId === admin.id && c.receiverId === currentUser.id)
+                        ).sort((a,b) => a.timestamp - b.timestamp);
+                        
+                        // PERUBAHAN: Menggunakan renderMessageContent
+                        let chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `
+                            <div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">
+                                    ${renderMessageContent(c)}
+                                    <div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div>
+                                </div>
+                            </div>`).join('')}
+                        </div>${chatInputHtml}`;
+
+                        App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 70vh;">${chatBoxHtml}</div></div>`;
+                        
+                        if (document.getElementById('chat-form')) {
+                            document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(admin.id, document.getElementById('chat-input').value); });
+                            
+                            // --- LISTENER BARU (SISWA/GURU) ---
+                            document.getElementById('chat-image-btn').onclick = () => document.getElementById('chat-image-input').click();
+                            document.getElementById('chat-file-btn').onclick = () => document.getElementById('chat-file-input').click();
+                            document.getElementById('chat-image-input').onchange = (e) => App.logic.sendFile(e, admin.id, 'image');
+                            document.getElementById('chat-file-input').onchange = (e) => App.logic.sendFile(e, admin.id, 'file');
+
+                            const messageList = document.getElementById('message-list');
+                            if(messageList) messageList.scrollTop = messageList.scrollHeight;
+                        }
+                    }
+                },
+                pengaturan_akun() {
+                    const user = App.state.currentUser;
+                    const social = user.social || { twitter: '', instagram: '' };
+                    const preferences = user.preferences || { theme: 'light', animations: true };
+
+                    App.DOM.mainContent.innerHTML = `
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Pengaturan Akun</h2>
+                        <form id="edit-profile-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
+                            <div class="flex items-center space-x-6">
+                                <img id="profile-preview-img" src="${user.avatar}" alt="Foto Profil" class="w-24 h-24 rounded-full object-cover border-4 border-blue-200">
+                                <div>
+                                    <label for="avatarUpload" class="cursor-pointer bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                        <span>Ubah Foto</span>
+                                        <input id="avatarUpload" name="avatarUpload" type="file" class="sr-only" accept="image/*">
+                                    </label>
+                                    <p class="text-xs text-gray-500 mt-2">Pilih gambar dari galeri Anda.</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="fullName" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                    <input type="text" id="fullName" name="fullName" value="${user.name}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editUsername" class="block text-sm font-medium text-gray-700">Username</label>
+                                    <input type="text" id="editUsername" name="editUsername" value="${user.username}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                    <input type="email" id="email" name="email" value="${user.email}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="phone" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                                    <input type="tel" id="phone" name="phone" value="${user.phone}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="address" class="block text-sm font-medium text-gray-700">Alamat</label>
+                                <textarea id="address" name="address" rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">${user.address}</textarea>
+                            </div>
+
+                            <div>
+                                <label for="bio" class="block text-sm font-medium text-gray-700">Bio Singkat</label>
+                                <input type="text" id="bio" name="bio" value="${user.bio}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Siswa kelas X, hobi...">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="twitter" class="block text-sm font-medium text-gray-700">Twitter (Username)</label>
+                                    <input type="text" id="twitter" name="twitter" value="${social.twitter}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budisantoso">
+                                </div>
+                                <div>
+                                    <label for="instagram" class="block text-sm font-medium text-gray-700">Instagram (Username)</label>
+                                    <input type="text" id="instagram" name="instagram" value="${social.instagram}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budi_basket">
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Kustomisasi Tampilan</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="themeSelector" class="block text-sm font-medium text-gray-700">Tema Aplikasi</label>
+                                        <select id="themeSelector" name="themeSelector" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="light" ${preferences.theme === 'light' ? 'selected' : ''}>Cerah (Default)</option>
+                                            <option value="dark" ${preferences.theme === 'dark' ? 'selected' : ''}>Gelap</option>
+                                            <option value="blue" ${preferences.theme === 'blue' ? 'selected' : ''}>Biru Sekolah</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Animasi</label>
+                                        <div class="mt-2 flex items-center">
+                                             <input type="checkbox" id="animationsToggle" name="animationsToggle" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${preferences.animations ? 'checked' : ''}>
+                                             <label for="animationsToggle" class="ml-2 block text-sm text-gray-900">Aktifkan animasi antarmuka</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-6">
+                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Ubah Password</h3>
+                                 <p class="text-sm text-gray-500 mb-4">Isi hanya jika ingin mengubah password.</p>
+                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="newPassword" class="block text-sm font-medium text-gray-700">Password Baru</label>
+                                        <input type="password" id="newPassword" name="newPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Konfirmasi Password Baru</label>
+                                        <input type="password" id="confirmPassword" name="confirmPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p id="profile-update-error" class="text-red-500 text-sm text-center hidden"></p>
+
+                            <div class="text-right">
+                                <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition duration-300">
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    `;
+                    document.getElementById('edit-profile-form').addEventListener('submit', App.logic.updateProfile);
+
+                    const avatarUploadInput = document.getElementById('avatarUpload');
+                    const profilePreviewImg = document.getElementById('profile-preview-img');
+
+                    avatarUploadInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                profilePreviewImg.src = event.target.result;
+                            }
+                            reader.readAsDataURL(file);
+                        } else if(file) {
+                            App.utils.showNotification('File Tidak Sesuai', 'Harap pilih file gambar (PNG, JPG, dll).', 'warning');
+                        }
+                    });
+                },
+                panduan() {
+                    App.DOM.mainContent.innerHTML = `
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6 guide-title-animated text-center">Buku Panduan OSERT</h2>
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-xl shadow-md guide-card-animated">
+                                <h3 class="text-2xl font-bold mb-2 text-blue-600">1. Absen & Beranda</h3>
+                                <p class="text-gray-700">Masuk pakai akunmu (username, password, dan peran). Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h3 class="text-2xl font-bold mb-2 text-green-600">2. Pinjam Barang (1-7 Hari)</h3>
+                                <p class="text-gray-700">Pilih 'Pinjam Barang' dan sekarang kamu bisa pilih mau pinjam untuk 1, 3, atau 7 hari. Sesuaikan dengan kebutuhanmu!</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h3 class="text-2xl font-bold mb-2 text-red-600">3. Denda (PENTING!)</h3>
+                                <p class="text-gray-700">Jangan telat mengembalikan, ya! Ada denda <strong>Rp 100.000</strong> jika kamu telat mengembalikan barang.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h3 class="text-2xl font-bold mb-2 text-purple-600">4. Chat Admin (Dengan Upload)</h3>
+                                <p class="text-gray-700">Ada masalah atau pertanyaan? Langsung aja kirim pesan ke Admin lewat menu 'Chat Admin'. Kamu juga bisa (segera) mengunggah foto, dokumen, atau stiker!</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h3 class="text-2xl font-bold mb-2 text-orange-600">5. Peringatan Admin (Khusus Admin)</h3>
+                                <p class="text-gray-700">Admin bisa mengirim peringatan ke pengguna yang melanggar aturan. Jika kamu mendapatkannya, segera hubungi admin!</p>
+                            </div>
+                        </div>
+                    </div>`;
+                },
             },
             
             // Fungsi Bantuan
             utils: {
+                setupCursorHover() { // Fungsi baru ditambahkan
+                    if (!App.DOM.cursorOutline) return;
+                    // #profile-card Dihapus dari selector
+                    document.querySelectorAll('a, button, .sidebar-link, [onclick], input[type="file"], select').forEach(el => {
+                        el.removeEventListener('mouseenter', App.utils.cursorHoverOn); // Hapus listener lama
+                        el.removeEventListener('mouseleave', App.utils.cursorHoverOff); // Hapus listener lama
+                        el.addEventListener('mouseenter', App.utils.cursorHoverOn);
+                        el.addEventListener('mouseleave', App.utils.cursorHoverOff);
+                    });
+                },
+                cursorHoverOn() { // Fungsi baru ditambahkan
+                    if (App.DOM.cursorOutline) App.DOM.cursorOutline.classList.add('cursor-hover');
+                },
+                cursorHoverOff() { // Fungsi baru ditambahkan
+                    if (App.DOM.cursorOutline) App.DOM.cursorOutline.classList.remove('cursor-hover');
+                },
+
                 showNotification(title, message, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
                     App.DOM.modalBody.innerHTML = message;
@@ -1064,7 +1849,7 @@
                             el.classList.add('closing');
                             setTimeout(() => el.remove(), 500);
                         }
-                    }, 6000); // Hapus setelah 6 detik
+                    }, 6000);
                 },
                 showUserModal(userId = null) {
                     const isEditing = !!userId;
@@ -1122,7 +1907,13 @@
                         <p class="mb-4">Kamu akan meminjam: <strong>${item.name}</strong></p>
                         <label for="borrowDuration" class="block text-sm font-medium text-left mb-2">Pilih durasi peminjaman:</label>
                         <select id="borrowDuration" class="w-full px-3 py-2 border rounded-lg">
-                            <option value="1">1 Hari</option> <option value="3" selected>3 Hari</option> <option value="7">7 Hari (1 Minggu)</option>
+                            <option value="1">1 Hari</option>
+                            <option value="2">2 Hari</option>
+                            <option value="3" selected>3 Hari</option>
+                            <option value="4">4 Hari</option>
+                            <option value="5">5 Hari</option>
+                            <option value="6">6 Hari</option>
+                            <option value="7">7 Hari (Maksimal)</option>
                         </select>`;
                     const modalFooter = `<button id="confirm-borrow-btn" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Konfirmasi Pinjam</button>`;
                     App.utils.showModal(`Pinjam Barang`, modalBody, modalFooter);
@@ -1214,6 +2005,13 @@
                     `;
                     App.utils.showModal(title, bodyHtml);
                 },
+                showWarningModal(message) {
+                    document.getElementById('warning-body').textContent = message;
+                    App.DOM.warningModal.classList.add('show');
+                },
+                hideWarningModal() {
+                    App.DOM.warningModal.classList.remove('show');
+                },
                 showModal(title, bodyHtml, footerHtml, type = 'info') {
                     App.DOM.modalTitle.textContent = title;
                     App.DOM.modalBody.innerHTML = bodyHtml;
@@ -1224,20 +2022,23 @@
                 startClock() {
                     const datetimeEl = document.getElementById('live-datetime');
                     if (!datetimeEl) return;
-
                     const updateClock = () => {
                         const now = new Date();
                         const optionsDate = { weekday: 'long', day: 'numeric', month: 'long' };
                         const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-                        
                         const dateString = now.toLocaleDateString('id-ID', optionsDate);
                         const timeString = now.toLocaleTimeString('id-ID', optionsTime).replace(/\./g, ':');
-
-                        datetimeEl.textContent = `${dateString} | ${timeString}`;
+                        datetimeEl.innerHTML = `<span>${dateString} | ${timeString}</span><span id="live-weather"></span>`;
                     };
-                    
                     updateClock();
                     setInterval(updateClock, 1000);
+                },
+                getWeather() {
+                    // Simulasi cuaca untuk Bogor (karena kita tidak bisa call API)
+                    const weatherEl = document.getElementById('live-weather');
+                    if(weatherEl) {
+                        weatherEl.innerHTML = ` | <span class="opacity-80">Bogor: 28°C ☀️</span>`;
+                    }
                 },
                 hideModal() { App.DOM.modal.classList.remove('show'); },
                 formatDate(date) { return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); },
@@ -1245,12 +2046,14 @@
                     if (!loan.returnDate && new Date() > loan.dueDate) {
                         return App.config.penalty; // Denda flat
                     }
+                    if (loan.returnDate && loan.returnDate > loan.dueDate) {
+                        return App.config.penalty; // Denda flat
+                    }
                     return 0;
                 },
                 getGreeting() { const h = new Date().getHours(); return h<11 ? "Selamat Pagi" : h<15 ? "Selamat Siang" : h<18 ? "Selamat Sore" : "Selamat Malam"; },
                 getGreetingSubtext() { const h = new Date().getHours(); return h<11 ? "Jangan lupa sarapan dan semangat belajar ya!" : h<15 ? "Sudah masuk jam istirahat, jangan lupa jajan di kantin!" : h<18 ? "Sudah waktunya pulang, hati-hati di jalan!" : "Waktunya istirahat, jangan begadang ya!"; },
-                makeDraggable(element) { let isDragging = false, offsetX, offsetY; element.onmousedown = (e) => { isDragging = true; offsetX = e.clientX - element.getBoundingClientRect().left; offsetY = e.clientY - element.getBoundingClientRect().top; element.classList.add('dragging'); e.preventDefault(); }; document.onmousemove = (e) => { if (!isDragging) return; let newX = e.clientX - offsetX; let newY = e.clientY - offsetY; const maxX = window.innerWidth - element.offsetWidth; const maxY = window.innerHeight - element.offsetHeight; element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`; element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`; element.style.bottom = 'auto'; element.style.right = 'auto'; }; document.onmouseup = () => { isDragging = false; element.classList.remove('dragging'); }; },
-                getAIResponse(question) { /* same as before */ },
+                /* Fungsi makeDraggable Dihapus */
                 applyTheme(theme) {
                     document.body.classList.remove('dark', 'theme-blue');
                     if (theme === 'dark') {
@@ -1271,315 +2074,6 @@
             App.init()
         });
         
-        // --- Implementasi Fungsi Render yang Kompleks (di luar objek utama untuk kerapian) ---
-        App.render.userProfile = function() { App.DOM.userProfile.innerHTML = `<img src="${App.state.currentUser.avatar}" alt="Avatar" class="w-9 h-9 rounded-full object-cover"><div><p class="font-semibold text-gray-800">${App.state.currentUser.name}</p><p class="text-sm text-gray-500 capitalize">${App.state.currentUser.role}</p></div>`; };
-        App.render.pinjam = function() {
-            const categories = [...new Set(App.data.items.map(item => item.category))];
-            let itemsHtml = categories.map(category => {
-                const itemsInCategory = App.data.items.filter(item => item.category === category);
-                return `<div class="mb-8"><h3 class="text-xl font-bold text-gray-700 mb-4 pb-2 border-b-2 border-blue-200">${category}</h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                ${itemsInCategory.map(item => `<div class="bg-white rounded-xl shadow-md p-4 flex flex-col items-center text-center">
-                    <div class="text-blue-500 mb-3">${ICONS[item.icon] || ICONS.archive}</div>
-                    <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
-                    <p class="text-gray-500 text-sm mb-3">Sisa: ${item.available} / ${item.total}</p>
-                    <button class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                        onclick="App.utils.showBorrowModal('${item.id}')" ${item.available === 0 ? 'disabled' : ''}>
-                        ${item.available === 0 ? 'Lagi Dipakai' : 'Pinjam'}
-                    </button></div>`).join('')}</div></div>`;
-            }).join('');
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pilih Barang Inventaris</h2>${itemsHtml}</div>`;
-        };
-        
-        App.render.pengaturan_akun = function() {
-            const user = App.state.currentUser;
-            const social = user.social || { twitter: '', instagram: '' };
-            const preferences = user.preferences || { theme: 'light', animations: true };
-
-            App.DOM.mainContent.innerHTML = `
-            <div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Pengaturan Akun</h2>
-                <form id="edit-profile-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
-                    <div class="flex items-center space-x-6">
-                        <img id="profile-preview-img" src="${user.avatar}" alt="Foto Profil" class="w-24 h-24 rounded-full object-cover border-4 border-blue-200">
-                        <div>
-                            <label for="avatarUpload" class="cursor-pointer bg-white py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                                <span>Ubah Foto</span>
-                                <input id="avatarUpload" name="avatarUpload" type="file" class="sr-only" accept="image/*">
-                            </label>
-                            <p class="text-xs text-gray-500 mt-2">Pilih gambar dari galeri Anda.</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="fullName" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                            <input type="text" id="fullName" name="fullName" value="${user.name}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div>
-                            <label for="editUsername" class="block text-sm font-medium text-gray-700">Username</label>
-                            <input type="text" id="editUsername" name="editUsername" value="${user.username}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="email" name="email" value="${user.email}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
-                            <input type="tel" id="phone" name="phone" value="${user.phone}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700">Alamat</label>
-                        <textarea id="address" name="address" rows="3" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">${user.address}</textarea>
-                    </div>
-
-                    <div>
-                        <label for="bio" class="block text-sm font-medium text-gray-700">Bio Singkat</label>
-                        <input type="text" id="bio" name="bio" value="${user.bio}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Siswa kelas X, hobi...">
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="twitter" class="block text-sm font-medium text-gray-700">Twitter (Username)</label>
-                            <input type="text" id="twitter" name="twitter" value="${social.twitter}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budisantoso">
-                        </div>
-                        <div>
-                            <label for="instagram" class="block text-sm font-medium text-gray-700">Instagram (Username)</label>
-                            <input type="text" id="instagram" name="instagram" value="${social.instagram}" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="contoh: budi_basket">
-                        </div>
-                    </div>
-                    
-                    <div class="border-t pt-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Kustomisasi Tampilan</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="themeSelector" class="block text-sm font-medium text-gray-700">Tema Aplikasi</label>
-                                <select id="themeSelector" name="themeSelector" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="light" ${preferences.theme === 'light' ? 'selected' : ''}>Cerah (Default)</option>
-                                    <option value="dark" ${preferences.theme === 'dark' ? 'selected' : ''}>Gelap</option>
-                                    <option value="blue" ${preferences.theme === 'blue' ? 'selected' : ''}>Biru Sekolah</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Animasi</label>
-                                <div class="mt-2 flex items-center">
-                                     <input type="checkbox" id="animationsToggle" name="animationsToggle" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${preferences.animations ? 'checked' : ''}>
-                                     <label for="animationsToggle" class="ml-2 block text-sm text-gray-900">Aktifkan animasi antarmuka</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="border-t pt-6">
-                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Ubah Password</h3>
-                         <p class="text-sm text-gray-500 mb-4">Isi hanya jika ingin mengubah password.</p>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="newPassword" class="block text-sm font-medium text-gray-700">Password Baru</label>
-                                <input type="password" id="newPassword" name="newPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Konfirmasi Password Baru</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p id="profile-update-error" class="text-red-500 text-sm text-center hidden"></p>
-
-                    <div class="text-right">
-                        <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition duration-300">
-                            Simpan Perubahan
-                        </button>
-                    </div>
-                </form>
-            </div>
-            `;
-            document.getElementById('edit-profile-form').addEventListener('submit', App.logic.updateProfile);
-
-            const avatarUploadInput = document.getElementById('avatarUpload');
-            const profilePreviewImg = document.getElementById('profile-preview-img');
-
-            avatarUploadInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        profilePreviewImg.src = event.target.result;
-                    }
-                    reader.readAsDataURL(file);
-                } else if(file) {
-                    App.utils.showNotification('File Tidak Sesuai', 'Harap pilih file gambar (PNG, JPG, dll).', 'warning');
-                }
-            });
-        };
-        App.render.kembalikan = function() {
-            const loansToReturn = App.data.loans.filter(l => (App.state.currentUser.role === 'admin' || l.userId === App.state.currentUser.id) && !l.returnDate).sort((a,b) => a.dueDate - b.dueDate);
-            let loansHtml = loansToReturn.map(loan => {
-                const item = App.data.items.find(i => i.id === loan.itemId);
-                const user = App.data.users.find(u => u.id === loan.userId);
-                const isLate = new Date() > loan.dueDate;
-                return `<tr class="border-b ${isLate ? 'bg-red-50' : ''}"><td class="py-3 px-4">${item.name}</td>${App.state.currentUser.role === 'admin' ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4 font-semibold ${isLate ? 'text-red-600' : ''}">${App.utils.formatDate(loan.dueDate)}</td><td class="py-3 px-4"><button class="bg-green-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-green-600" onclick="App.utils.showReturnModal('${loan.loanId}')">Kembalikan</button></td></tr>`;
-            }).join('') || `<tr><td colspan="4" class="text-center py-8 text-gray-500">Aman! Gak ada barang yang sedang kamu pinjam.</td></tr>`;
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kembalikan Barang</h2><div class="bg-white rounded-xl shadow-md overflow-hidden"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase"><tr><th class="py-3 px-4">Nama Barang</th>${App.state.currentUser.role === 'admin' ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Jatuh Tempo</th><th class="py-3 px-4">Aksi</th></tr></thead><tbody>${loansHtml}</tbody></table></div></div>`;
-        };
-        App.render.riwayat = function() {
-            const isAdmin = App.state.currentUser.role === 'admin';
-            let userLoans = isAdmin ? [...App.data.loans] : App.data.loans.filter(l => l.userId === App.state.currentUser.id);
-            userLoans.sort((a, b) => b.borrowDate - a.borrowDate);
-
-            let adminAnalysisHtml = '';
-            if (isAdmin) {
-                const activeLoans = App.data.loans.filter(l => !l.returnDate);
-                const popularItem = App.logic.getMostPopularItem();
-                
-                const userLoanCounts = App.data.loans.reduce((acc, loan) => {
-                    acc[loan.userId] = (acc[loan.userId] || 0) + 1;
-                    return acc;
-                }, {});
-                let mostActiveUser = { name: '-', loans: 0 };
-                if (Object.keys(userLoanCounts).length > 0) {
-                    const mostActiveUserId = Object.keys(userLoanCounts).reduce((a, b) => userLoanCounts[a] > userLoanCounts[b] ? a : b);
-                    mostActiveUser.name = App.data.users.find(u => u.id === mostActiveUserId).name;
-                    mostActiveUser.loans = userLoanCounts[mostActiveUserId];
-                }
-                
-                adminAnalysisHtml = `
-                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjaman Aktif</p><p class="text-2xl font-bold">${activeLoans.length}</p></div>
-                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Total Transaksi</p><p class="text-2xl font-bold">${App.data.loans.length}</p></div>
-                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Aset Terpopuler</p><p class="text-lg font-bold truncate">${popularItem ? popularItem.name : '-'}</p></div>
-                    <div class="bg-white p-4 rounded-lg shadow-md"><p class="text-sm text-gray-500">Peminjam Teraktif</p><p class="text-lg font-bold truncate">${mostActiveUser.name} (${mostActiveUser.loans}x)</p></div>
-                </div>
-                `;
-            }
-
-            const loansHtml = userLoans.map(loan => {
-                const item = App.data.items.find(i => i.id === loan.itemId);
-                const user = App.data.users.find(u => u.id === loan.userId);
-                let statusBadge;
-                if (loan.returnDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Sudah Kembali</span>`;
-                else if (new Date() > loan.dueDate) statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Telat</span>`;
-                else statusBadge = `<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Dipinjam</span>`;
-                
-                let docButton = '';
-                if(isAdmin && loan.returnDocumentation) {
-                    docButton = `<button class="text-blue-600 hover:underline text-xs" onclick="App.utils.showDocumentationModal('${loan.loanId}')">Lihat</button>`;
-                }
-                
-                return `<tr class="border-b"><td class="py-3 px-4">${item.name}</td>${isAdmin ? `<td class="py-3 px-4">${user.name}</td>` : ''}<td class="py-3 px-4">${App.utils.formatDate(loan.borrowDate)}</td><td class="py-3 px-4">${loan.returnDate ? App.utils.formatDate(loan.returnDate) : 'Masih dipinjam'}</td><td class="py-3 px-4">${statusBadge}</td>${isAdmin ? `<td class="py-3 px-4 text-center">${docButton}</td>`: ''}</tr>`;
-            }).join('') || `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-8 text-gray-500">Belum ada catatan peminjaman.</td></tr>`;
-
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Catatan Peminjaman</h2>${adminAnalysisHtml}<div class="bg-white rounded-xl shadow-md overflow-hidden"><div class="max-h-[60vh] overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-4">Nama Barang</th>${isAdmin ? '<th class="py-3 px-4">Peminjam</th>' : ''}<th class="py-3 px-4">Tgl Pinjam</th><th class="py-3 px-4">Tgl Kembali</th><th class="py-3 px-4">Status</th>${isAdmin ? '<th class="py-3 px-4 text-center">Dokumentasi</th>': ''}</tr></thead><tbody>${loansHtml}</tbody></table></div></div></div>`;
-        };
-        App.render.kelola_aset = function() {
-            const itemsHtml = App.data.items.map(item => `<tr class="border-b"><td class="py-2 px-3">${item.name}</td><td class="py-2 px-3">${item.category}</td><td class="py-2 px-3 text-center">${item.available} / ${item.total}</td></tr>`).join('');
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Kelola Aset Sekolah</h2><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Daftar Aset Saat Ini</h3><div class="max-h-96 overflow-y-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="bg-slate-100 text-xs text-gray-700 uppercase sticky top-0"><tr><th class="py-3 px-3">Nama Barang</th><th class="py-3 px-3">Kategori</th><th class="py-3 px-3 text-center">Tersedia</th></tr></thead><tbody>${itemsHtml}</tbody></table></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-xl font-bold mb-4">Tambah Aset Baru</h3><form id="add-item-form" class="space-y-4"><div><label for="itemName" class="block text-sm font-medium">Nama Barang</label><input type="text" id="itemName" name="itemName" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemCategory" class="block text-sm font-medium">Kategori</label><select id="itemCategory" name="itemCategory" class="mt-1 w-full px-3 py-2 border rounded-lg" required><option>Elektronik</option><option>Olahraga</option><option>Laboratorium</option><option>Kelas</option><option>Lainnya</option></select></div><div><label for="itemTotal" class="block text-sm font-medium">Jumlah Total</label><input type="number" id="itemTotal" name="itemTotal" min="1" class="mt-1 w-full px-3 py-2 border rounded-lg" required></div><div><label for="itemIcon" class="block text-sm font-medium">Nama Ikon (dari Lucide)</label><input type="text" id="itemIcon" name="itemIcon" placeholder="cth: archive" class="mt-1 w-full px-3 py-2 border rounded-lg"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg">Tambah</button></form></div></div></div>`;
-            document.getElementById('add-item-form').addEventListener('submit', App.logic.addItem);
-        };
-        App.render.kelola_akun = function() {
-            const users = App.data.users;
-            const usersHtml = users.map(user => `
-                <tr class="border-b">
-                    <td class="p-3 flex items-center gap-3">
-                        <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover">
-                        <div>
-                            <p class="font-bold">${user.name}</p>
-                            <p class="text-xs text-gray-500">${user.email}</p>
-                        </div>
-                    </td>
-                    <td class="p-3">${user.username}</td>
-                    <td class="p-3 capitalize">${user.role}</td>
-                    <td class="p-3">
-                        <div class="flex gap-2">
-                            <button class="text-blue-600 hover:text-blue-800" onclick="App.utils.showUserModal('${user.id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-800" onclick="App.logic.deleteUser('${user.id}')">Hapus</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-
-            App.DOM.mainContent.innerHTML = `
-                <div>
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                        <h2 class="text-3xl font-bold text-gray-800">Kelola Akun Pengguna</h2>
-                        <button onclick="App.utils.showUserModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-blue-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
-                            Tambah Akun
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <table class="w-full text-sm text-left text-gray-600">
-                            <thead class="bg-slate-100 text-xs text-gray-700 uppercase">
-                                <tr>
-                                    <th class="py-3 px-3">Nama Lengkap</th>
-                                    <th class="py-3 px-3">Username</th>
-                                    <th class="py-3 px-3">Peran</th>
-                                    <th class="py-3 px-3">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${usersHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        };
-        App.render.chat = function(activeChatUserId) {
-            const currentUser = App.state.currentUser;
-            if (currentUser.role === 'admin') {
-                const messageSenders = [...new Set(App.data.chats.map(c => c.senderId).filter(id => id !== currentUser.id))];
-                const unreadCounts = messageSenders.reduce((acc, senderId) => { acc[senderId] = App.data.chats.filter(c => c.senderId === senderId && !c.isRead).length; return acc; }, {});
-                const contactListHtml = messageSenders.map(senderId => { const sender = App.data.users.find(u => u.id === senderId); const isActive = senderId === activeChatUserId; return `<div class="p-3 border-b cursor-pointer ${isActive ? 'bg-blue-100' : 'hover:bg-slate-50'}" onclick="App.render.chat('${senderId}')"><p class="font-semibold">${sender.name} ${unreadCounts[senderId] > 0 ? `<span class="ml-2 text-xs text-white bg-red-500 rounded-full px-2 py-1">${unreadCounts[senderId]}</span>` : ''}</p><p class="text-xs text-gray-500">${sender.role}</p></div>`; }).join('') || `<div class="p-4 text-center text-gray-500">Belum ada pesan masuk.</div>`;
-                let chatBoxHtml = `<div class="h-full flex items-center justify-center text-gray-500">Pilih percakapan untuk ditampilkan.</div>`;
-                if(activeChatUserId) {
-                    App.data.chats.forEach(c => { if(c.senderId === activeChatUserId && c.receiverId === currentUser.id) c.isRead = true; }); 
-                    App.data.saveDataToLocal(); // Simpan status "sudah dibaca"
-                    App.render.sidebar();
-                    const messages = App.data.chats.filter(c => (c.senderId === currentUser.id && c.receiverId === activeChatUserId) || (c.senderId === activeChatUserId && c.receiverId === currentUser.id));
-                    chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik balasan..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
-                }
-                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Pesan Masuk</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-xl shadow-md" style="height: 60vh;"><div class="md:col-span-1 border-r overflow-y-auto">${contactListHtml}</div><div class="md:col-span-2 flex flex-col">${chatBoxHtml}</div></div></div>`;
-                if(activeChatUserId && document.getElementById('chat-form')) {
-                    document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(activeChatUserId, document.getElementById('chat-input').value); });
-                    document.getElementById('message-list').scrollTop = document.getElementById('message-list').scrollHeight;
-                }
-            } else {
-                // LOGIKA UNTUK GURU DAN SISWA (YANG HILANG)
-                const admin = App.data.users.find(u => u.role === 'admin');
-                if (!admin) {
-                    App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><p class="text-gray-600">Fitur chat sedang tidak tersedia. Tidak ada admin yang terdeteksi.</p></div>`;
-                    return;
-                }
-                
-                // Tandai pesan dari admin sebagai sudah dibaca
-                App.data.chats.forEach(c => { if(c.senderId === admin.id && c.receiverId === currentUser.id) c.isRead = true; }); 
-                App.data.saveDataToLocal(); // Simpan status "sudah dibaca"
-                App.render.sidebar(); // Update badge
-
-                const messages = App.data.chats.filter(c => 
-                    (c.senderId === currentUser.id && c.receiverId === admin.id) || 
-                    (c.senderId === admin.id && c.receiverId === currentUser.id)
-                ).sort((a,b) => a.timestamp - b.timestamp); // Urutkan pesan
-                
-                let chatBoxHtml = `<div id="message-list" class="flex-1 p-4 overflow-y-auto space-y-4">${messages.map(c => `<div class="flex ${c.senderId === currentUser.id ? 'justify-end' : 'justify-start'}"><div class="max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${c.senderId === currentUser.id ? 'bg-blue-500 text-white' : 'bg-slate-200'}">${c.message}<div class="text-xs mt-1 ${c.senderId === currentUser.id ? 'text-blue-200' : 'text-gray-500'} text-right">${App.utils.formatDate(c.timestamp)}</div></div></div>`).join('')}</div><div class="p-4 border-t"><form id="chat-form" class="flex gap-2"><input id="chat-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Ketik pesan untuk admin..."><button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">Kirim</button></form></div>`;
-
-                App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Chat Admin</h2><div class="bg-white rounded-xl shadow-md flex flex-col" style="height: 60vh;">${chatBoxHtml}</div></div>`;
-                
-                if (document.getElementById('chat-form')) {
-                    document.getElementById('chat-form').addEventListener('submit', (e) => { e.preventDefault(); App.logic.sendMessage(admin.id, document.getElementById('chat-input').value); });
-                    const messageList = document.getElementById('message-list');
-                    if(messageList) messageList.scrollTop = messageList.scrollHeight;
-                }
-            }
-        };
-        App.render.panduan = function() {
-            App.DOM.mainContent.innerHTML = `<div><h2 class="text-3xl font-bold text-gray-800 mb-6">Buku Panduan SIPINJOL</h2><div class="space-y-6 bg-white p-6 rounded-xl shadow-md"><div><h3 class="text-xl font-bold mb-2">1. Absen & Beranda</h3><p>Masuk pakai akunmu. Di Beranda, kamu akan disambut sapaan hangat dan ada papan pengumuman sekolah.</p></div><div><h3 class="text-xl font-bold mb-2">2. Pinjam Barang (Fleksibel!)</h3><p>Pilih 'Pinjam Barang' dan sekarang kamu bisa pilih mau pinjam untuk 1, 3, atau 7 hari. Sesuaikan dengan kebutuhanmu!</p></div><div><h3 class="text-xl font-bold mb-2">3. Chat Admin Langsung</h3><p>Ada masalah dengan barang atau punya pertanyaan? Langsung aja kirim pesan ke Admin lewat menu 'Chat Admin'.</p></div><div><h3 class="text-xl font-bold mb-2">4. Kelola Aset (Khusus Admin)</h3><p>Admin sekarang bisa menambah data inventaris baru lewat menu 'Kelola Aset'.</p></div></div></div>`;
-            };
-            
     </script>
 </body>
 </html>
